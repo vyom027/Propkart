@@ -1,0 +1,1175 @@
+{% extends 'app/seller/seller-base.html' %}
+{% load static %}
+
+{% block title %}My Properties{% endblock %}
+
+{% block extra_css %}
+<style>
+  .properties-container {
+    margin-top: 100px;
+    min-height: calc(100vh - 200px);
+  }
+  
+  .page-header {
+    background: var(--bs-secondary);
+    color: #fff;
+    padding: 40px 0;
+    margin-bottom: 40px;
+    border-radius: 0 0 20px 20px;
+  }
+  
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+  
+  .page-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+  
+  .stats-cards {
+    margin-bottom: 30px;
+  }
+  
+  .stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease;
+    border: 1px solid #f0f0f0;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  
+  .stat-label {
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  .property-card {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #f0f0f0;
+    margin-bottom: 25px;
+  }
+  
+  .property-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  }
+  
+  .property-image {
+    height: 200px;
+    background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .property-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  
+  .property-image:hover img {
+    transform: scale(1.05);
+  }
+  
+  .property-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .property-content {
+    padding: 25px;
+  }
+  
+  .property-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  
+  .property-location {
+    color: #666;
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .property-location i {
+    margin-right: 5px;
+    color: #999;
+  }
+  
+  .property-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--bs-success);
+    margin-bottom: 15px;
+  }
+  
+  .property-specs {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .spec-item {
+    display: flex;
+    align-items: center;
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  .spec-item i {
+    margin-right: 5px;
+    color: #999;
+  }
+  
+  .property-badges {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  
+  .badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  
+  .badge-verified {
+    background: #d4edda;
+    color: #155724;
+  }
+  
+  .badge-pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+  
+  .badge-furnished {
+    background: #e2e3e5;
+    color: #383d41;
+  }
+  
+  .property-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Bulk selection styles */
+  .bulk-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .select-all-wrap {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .card-select-checkbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 2;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .btn-action {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-edit {
+    background: #e3f2fd;
+    color: #1976d2;
+  }
+  
+  .btn-edit:hover {
+    background: #1976d2;
+    color: white;
+    transform: scale(1.1);
+  }
+  
+  .btn-delete {
+    background: #ffebee;
+    color: #d32f2f;
+  }
+  
+  .btn-delete:hover {
+    background: #d32f2f;
+    color: white;
+    transform: scale(1.1);
+  }
+  
+  .visibility-toggle {
+    background: #f3e5f5;
+    color: #7b1fa2;
+  }
+  
+  .visibility-toggle:hover {
+    background: #7b1fa2;
+    color: white;
+    transform: scale(1.1);
+  }
+  
+  .visibility-toggle[data-is-hidden="true"] {
+    background: #ffebee;
+    color: #d32f2f;
+  }
+  
+  .visibility-toggle[data-is-hidden="true"]:hover {
+    background: #d32f2f;
+    color: white;
+  }
+  
+  .spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .property-stats {
+    display: flex;
+    align-items: center;
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  .views-count {
+    display: flex;
+    align-items: center;
+    margin-right: 15px;
+  }
+  
+  .views-count i {
+    margin-right: 5px;
+  }
+  
+  .images-count {
+    display: flex;
+    align-items: center;
+  }
+  
+  .images-count i {
+    margin-right: 5px;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  }
+  
+  .empty-state i {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 20px;
+  }
+  
+  .empty-state h3 {
+    color: #666;
+    margin-bottom: 15px;
+  }
+  
+  .empty-state p {
+    color: #999;
+    margin-bottom: 25px;
+  }
+  
+  .add-property-btn { }
+  
+  .filter-tabs {
+    margin-bottom: 30px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  
+  .filter-tab {
+    padding: 10px 20px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    color: #666;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .filter-tab:hover,
+  .filter-tab.active {
+    background: var(--bs-secondary);
+    color: #fff;
+    border-color: var(--bs-secondary);
+  }
+  
+  @media (max-width: 768px) {
+    .properties-container {
+      margin-top: 80px;
+    }
+    
+    .page-title {
+      font-size: 2rem;
+    }
+    
+    .property-specs {
+      gap: 10px;
+    }
+    
+    .property-actions {
+      flex-direction: column;
+      gap: 15px;
+      align-items: stretch;
+    }
+    
+    .action-buttons {
+      justify-content: center;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid properties-container">
+  <!-- Page Header -->
+  <div class="page-header" style="margin-top: 120px;">
+    <div class="container" >
+      <div class="row align-items-center" >
+        <div class="col-md-8" >
+          <p class="page-title">My Properties</p>
+          <p class="page-subtitle">Manage and track your property listings</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+          <a href="{% url 'property_create' %}" class="btn btn-light btn-lg">
+            <i class="bi bi-plus-circle me-2"></i>Add New Property
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    {% if messages %}
+      <div class="container mt-3" style="z-index: 1050;max-width: 400px; position: fixed; top: 80px; right: 0;">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" style="height:13px"></button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Stats Cards -->
+    <div class="row stats-cards">
+      <div class="col-md-3 col-6 mb-3">
+        <div class="stat-card">
+          <div class="stat-number">{{ properties.count }}</div>
+          <div class="stat-label">Total Properties</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="stat-card">
+          <div class="stat-number">{{ properties|length }}</div>
+          <div class="stat-label">Active Listings</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="stat-card">
+          <div class="stat-number">{{ total_views }}</div>
+          <div class="stat-label">Total Views</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="stat-card">
+          <div class="stat-number">0</div>
+          <div class="stat-label">Enquiries</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <a href="#" class="filter-tab active" data-filter="all">All Properties</a>
+      <a href="#" class="filter-tab" data-filter="verified">Verified</a>
+      <a href="#" class="filter-tab" data-filter="pending">Pending</a>
+      <a href="#" class="filter-tab" data-filter="furnished">Furnished</a>
+    </div>
+
+    {% if properties.count == 0 %}
+      <div class="empty-state">
+        <i class="bi bi-house-door"></i>
+        <h3>No Properties Yet</h3>
+        <p>Start building your property portfolio by adding your first listing.</p>
+        <a href="{% url 'property_create' %}" class="add-property-btn">
+          <i class="bi bi-plus-circle me-2"></i>Add Your First Property
+        </a>
+      </div>
+    {% else %}
+      <form method="post" action="{% url 'properties_bulk_delete' %}" id="bulkDeleteForm">
+        {% csrf_token %}
+        <div class="bulk-toolbar">
+          <div class="select-all-wrap">
+            <input type="checkbox" id="selectAll"> <label for="selectAll" class="mb-0">Select all</label>
+          </div>
+          <button type="submit" class="btn btn-danger btn-sm" id="bulkDeleteBtn" disabled onclick="return confirm('Delete selected properties? This cannot be undone.');">
+            <i class="bi bi-trash me-1"></i>Delete selected
+          </button>
+        </div>
+      <div class="row">
+        {% for property in properties %}
+        <div class="col-lg-4 col-md-6">
+          <div class="property-card position-relative" data-status="{% if property.is_verified %}verified{% else %}pending{% endif %}" data-furnished="{% if property.furnished %}true{% else %}false{% endif %}">
+            <input type="checkbox" class="card-select-checkbox" name="property_ids" value="{{ property.id }}">
+            <div class="property-image">
+              {% if property.images.all %}
+                <img src="{{ property.images.all.0.image.url }}" alt="{{ property.title }}">
+              {% else %}
+                <div class="d-flex align-items-center justify-content-center h-100">
+                  <i class="bi bi-image" style="font-size: 3rem; color: #ccc;"></i>
+                </div>
+              {% endif %}
+              <div class="property-badge">{{ property.get_type_display }}</div>
+            </div>
+            
+            <div class="property-content">
+              <h3 class="property-title">{{ property.title }}</h3>
+              <div class="property-location">
+                <i class="bi bi-geo-alt"></i>
+                {{ property.location }}
+              </div>
+              <div class="property-price">₹ {{ property.price|floatformat:0 }}</div>
+              
+              <div class="property-specs">
+                {% if property.bedrooms %}
+                <div class="spec-item">
+                  <i class="bi bi-bed"></i>
+                  {{ property.bedrooms }} Beds
+                </div>
+                {% endif %}
+                {% if property.bathrooms %}
+                <div class="spec-item">
+                  <i class="bi bi-droplet"></i>
+                  {{ property.bathrooms }} Baths
+                </div>
+                {% endif %}
+                {% if property.rooms %}
+                <div class="spec-item">
+                  <i class="bi bi-door-open"></i>
+                  {{ property.rooms }} Rooms
+                </div>
+                {% endif %}
+              </div>
+              
+              <div class="property-badges">
+                {% if property.is_verified %}
+                  <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Verified</span>
+                {% else %}
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Pending</span>
+                {% endif %}
+                {% if property.furnished %}
+                  <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Furnished</span>
+                {% endif %}
+              </div>
+              
+              <div class="property-actions">
+                <div class="property-stats">
+                  <div class="views-count">
+                    <i class="bi bi-eye"></i>
+                    {{ property.views }} views
+                  </div>
+                  <div class="images-count">
+                    <i class="bi bi-images"></i>
+                    {{ property.images.count }} photos
+                  </div>
+                </div>
+                
+                <div class="action-buttons">
+                  <button type="button" class="btn-action btn-edit" 
+                          data-bs-toggle="modal"
+                          data-bs-target="#propertyDetailsModal"
+                          data-id="{{ property.id }}"
+                          data-title="{{ property.title }}"
+                          data-location="{{ property.location }}"
+                          data-type="{{ property.get_type_display }}"
+                          data-price="{{ property.price|floatformat:0 }}"
+                          data-description="{{ property.description|default:'—' }}"
+                          data-length="{{ property.length|default:'—' }}"
+                          data-width="{{ property.width|default:'—' }}"
+                          data-rooms="{{ property.rooms|default:'—' }}"
+                          data-bedrooms="{{ property.bedrooms|default:'—' }}"
+                          data-bathrooms="{{ property.bathrooms|default:'—' }}"
+                          data-furnished="{% if property.furnished %}Yes{% else %}No{% endif %}"
+                          data-city="{{ property.city }}"
+                          data-state="{{ property.state }}"
+                          data-country="{{ property.country }}"
+                          data-verified="{% if property.is_verified %}Yes{% else %}No{% endif %}"
+                          title="View Details">
+                    <i class="bi bi-info-circle"></i>
+                  </button>
+                  <button class="btn-action btn-edit" 
+                          data-bs-toggle="modal"
+                          data-bs-target="#updatePropertyModal"
+                          data-id="{{ property.id }}"
+                          data-title="{{ property.title }}"
+                          data-location="{{ property.location }}"
+                          data-type="{{ property.type }}"
+                          data-price="{{ property.price }}"
+                          data-description="{{ property.description }}"
+                          data-length="{{ property.length }}"
+                          data-width="{{ property.width }}"
+                          data-rooms="{{ property.rooms }}"
+                          data-bedrooms="{{ property.bedrooms }}"
+                          data-bathrooms="{{ property.bathrooms }}"
+                          data-furnished="{{ property.furnished }}"
+                          title="Edit Property">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  
+                  <!-- Visibility Toggle Button -->
+                  <button type="button" class="btn-action visibility-toggle" 
+                          data-property-id="{{ property.id }}"
+                          data-is-hidden="{{ property.is_hidden|yesno:'true,false' }}"
+                          title="{% if property.is_hidden %}Show to buyers{% else %}Hide from buyers{% endif %}">
+                    <i class="bi {% if property.is_hidden %}bi-eye-slash{% else %}bi-eye{% endif %}"></i>
+                  </button>
+                  
+                  <form action="{% url 'property_delete' property.id %}" method="post" 
+                        onsubmit="return confirm('Are you sure you want to delete this property?');" 
+                        style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-action btn-delete" title="Delete Property">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-body d-flex justify-content-center align-items-center position-relative p-0">
+        
+        <!-- Prev Button -->
+        <button type="button" class="nav-btn position-absolute start-0" id="prevImage">&#10094;</button>
+        
+        <!-- Next Button -->
+        <button type="button" class="nav-btn position-absolute end-0" id="nextImage">&#10095;</button>
+        
+        <!-- Fullscreen & Close -->
+        <div class="position-absolute top-0 end-0 m-3 d-flex gap-2">
+          <button type="button" class="control-btn" id="fullscreenToggle" title="Fullscreen">&#x26F6;</button>
+          <button type="button" class="control-btn d-none" id="closeFullscreen" title="Exit Fullscreen">&times;</button>
+          <button type="button" class="control-btn" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+        </div>
+        
+        <!-- Image -->
+        <img src="" id="modalImage" class="img-fluid rounded shadow-lg" alt="Preview">
+      </div>
+      <div class="text-center text-white fw-bold mt-2" id="modalCaption"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Property Details Modal -->
+<div class="modal fade" id="propertyDetailsModal" tabindex="-1" aria-labelledby="propertyDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="propertyDetailsModalLabel">Property Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Title:</strong> <span id="pd-title"></span></p>
+            <p class="mb-1"><strong>Price:</strong> ₹ <span id="pd-price"></span></p>
+            <p class="mb-1"><strong>Type:</strong> <span id="pd-type"></span></p>
+            <p class="mb-1"><strong>Verified:</strong> <span id="pd-verified"></span></p>
+            <p class="mb-1"><strong>Furnished:</strong> <span id="pd-furnished"></span></p>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Location:</strong> <span id="pd-location"></span></p>
+            <p class="mb-1"><strong>City:</strong> <span id="pd-city"></span></p>
+            <p class="mb-1"><strong>State:</strong> <span id="pd-state"></span></p>
+            <p class="mb-1"><strong>Country:</strong> <span id="pd-country"></span></p>
+          </div>
+          <div class="col-12">
+            <div class="d-flex flex-wrap gap-3">
+              <span><strong>Rooms:</strong> <span id="pd-rooms"></span></span>
+              <span><strong>Bedrooms:</strong> <span id="pd-bedrooms"></span></span>
+              <span><strong>Bathrooms:</strong> <span id="pd-bathrooms"></span></span>
+              <span><strong>Length:</strong> <span id="pd-length"></span></span>
+              <span><strong>Width:</strong> <span id="pd-width"></span></span>
+            </div>
+          </div>
+          <div class="col-12">
+            <p class="mb-1"><strong>Description:</strong></p>
+            <div class="border rounded p-2 bg-light" id="pd-description"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+ </div>
+
+<style>
+  .table {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  }
+  .table thead {
+    background-color: #343a40;
+    color: #fff;
+  }
+  .table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+  .table td, .table th {
+    padding: 0.75rem;
+    vertical-align: middle;
+  }
+  .badge {
+    font-size: 0.85rem;
+  }
+
+  .img-thumbnail {
+    border: 1px solid #dee2e6;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  }
+  .img-thumbnail:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+  }
+
+  /* Navigation buttons */
+  .nav-btn {
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    font-size: 2.5rem;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+    z-index: 5;
+  }
+  .nav-btn:hover {
+    background: rgba(0,0,0,0.7);
+  }
+
+  /* Control buttons (fullscreen, close) */
+  .control-btn {
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    font-size: 1.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+  }
+  .control-btn:hover {
+    background: rgba(0,0,0,0.8);
+  }
+
+  /* Caption styling */
+  #modalCaption {
+    font-size: 1rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.9);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .nav-btn {
+      font-size: 2rem;
+      width: 2.8rem;
+      height: 2.8rem;
+    }
+    .control-btn {
+      font-size: 1.2rem;
+      width: 2.2rem;
+      height: 2.2rem;
+    }
+  }
+</style>
+<div class="modal fade" id="updatePropertyModal" tabindex="-1" aria-labelledby="updatePropertyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="updatePropertyModalLabel">
+          <i class="bi bi-pencil-square me-2"></i> Update Property
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="updatePropertyForm" method="post" enctype="multipart/form-data">
+
+        {% csrf_token %}
+          <input type="hidden" name="property_id" id="update_property_id">
+
+          <!-- Property Details -->
+          <h6 class="mb-3">
+            <i class="bi bi-house-door me-2"></i> Property Details
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="update_title" class="form-label">
+                <i class="bi bi-tag me-1"></i> Property Title
+              </label>
+              <input type="text" class="form-control" id="update_title" name="title" required>
+            </div>
+            <div class="col-md-6">
+              <label for="update_location" class="form-label">
+                <i class="bi bi-geo-alt me-1"></i> Location
+              </label>
+              <input type="text" class="form-control" id="update_location" name="location" required>
+            </div>
+            <div class="col-md-6">
+              <label for="update_type" class="form-label">
+                <i class="bi bi-building me-1"></i> Property Type
+              </label>
+              <select class="form-select" id="update_type" name="type" required>
+                <option value="apartment">Apartment</option>
+                <option value="house">House</option>
+                <option value="land">Land</option>
+                <option value="villa">Villa</option>
+                <option value="commercial">Commercial</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label for="update_price" class="form-label">
+                <i class="bi bi-cash me-1"></i> Price (₹)
+              </label>
+              <input type="number" class="form-control" id="update_price" name="price" step="0.01" required>
+            </div>
+            <div class="col-12">
+              <label for="update_description" class="form-label">
+                <i class="bi bi-card-text me-1"></i> Description
+              </label>
+              <textarea class="form-control" id="update_description" name="description" rows="4"></textarea>
+            </div>
+          </div>
+
+          <!-- Features & Amenities -->
+          <h6 class="mb-3">
+            <i class="bi bi-tools me-2"></i> Features & Amenities
+          </h6>
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label for="update_length" class="form-label">Length (sq ft)</label>
+              <input type="number" class="form-control" id="update_length" name="length">
+            </div>
+            <div class="col-md-6">
+              <label for="update_width" class="form-label">Width (sq ft)</label>
+              <input type="number" class="form-control" id="update_width" name="width">
+            </div>
+            <div class="col-md-4 residential-field">
+              <label for="update_rooms" class="form-label">Total Rooms</label>
+              <input type="number" class="form-control" id="update_rooms" name="rooms">
+            </div>
+            <div class="col-md-4 residential-field">
+              <label for="update_bedrooms" class="form-label">Bedrooms</label>
+              <input type="number" class="form-control" id="update_bedrooms" name="bedrooms">
+            </div>
+            <div class="col-md-4 residential-field">
+              <label for="update_bathrooms" class="form-label">Bathrooms</label>
+              <input type="number" class="form-control" id="update_bathrooms" name="bathrooms">
+            </div>
+            <div class="col-12 residential-field">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="update_furnished" name="furnished">
+                <label class="form-check-label" for="update_furnished">
+                  This property is furnished
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Property Images -->
+          <h6 class="mb-3">
+            <i class="bi bi-images me-2"></i> Update Property Images
+          </h6>
+          <div class="mb-4">
+            <label for="update_images" class="form-label">Upload New Images</label>
+            <input class="form-control" type="file" id="update_images" name="images" accept="image/*" multiple>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-x-circle me-1"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Client-side filtering for status/furnished
+    const tabs = document.querySelectorAll('.filter-tab');
+    const cards = document.querySelectorAll('.property-card');
+
+    function applyFilter(filter) {
+      cards.forEach(card => {
+        const status = card.getAttribute('data-status');
+        const furnished = card.getAttribute('data-furnished') === 'true';
+
+        let show = true;
+        if (filter === 'verified') show = status === 'verified';
+        else if (filter === 'pending') show = status === 'pending';
+        else if (filter === 'furnished') show = furnished;
+
+        card.parentElement.style.display = show ? '' : 'none';
+      });
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function(e) {
+        e.preventDefault();
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        const filter = this.getAttribute('data-filter');
+        applyFilter(filter);
+      });
+    });
+
+    // Initialize default filter
+    applyFilter('all');
+
+    const imageModal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const modalCaption = document.getElementById('modalCaption');
+    const prevButton = document.getElementById('prevImage');
+    const nextButton = document.getElementById('nextImage');
+    const fullscreenToggle = document.getElementById('fullscreenToggle');
+    const closeFullscreen = document.getElementById('closeFullscreen');
+    let currentImages = [];
+    let currentIndex = 0;
+    let isFullscreen = false;
+
+    function showImage(index) {
+      const imgData = currentImages[index];
+      modalImage.src = imgData.src;
+      modalCaption.textContent = `${imgData.title} (${index + 1}/${imgData.total})`;
+      currentIndex = index;
+    }
+
+    imageModal.addEventListener('show.bs.modal', function (event) {
+      const clickedImage = event.relatedTarget;
+      const container = clickedImage.closest('div');
+      const imgs = container.querySelectorAll('.preview-image');
+
+      currentImages = [];
+      imgs.forEach(img => {
+        currentImages.push({
+          src: img.getAttribute('data-src'),
+          title: img.getAttribute('data-title'),
+          total: img.getAttribute('data-total')
+        });
+      });
+
+      const clickedSrc = clickedImage.getAttribute('data-src');
+      const index = currentImages.findIndex(img => img.src === clickedSrc);
+      showImage(index);
+    });
+
+    prevButton.addEventListener('click', function() {
+      let newIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+      showImage(newIndex);
+    });
+
+    nextButton.addEventListener('click', function() {
+      let newIndex = (currentIndex + 1) % currentImages.length;
+      showImage(newIndex);
+    });
+
+    fullscreenToggle.addEventListener('click', function() {
+      if (!isFullscreen) {
+        openFullscreen();
+      }
+    });
+
+    closeFullscreen.addEventListener('click', function() {
+      if (isFullscreen) {
+        closeFullscreenFunc();
+      }
+    });
+
+    function openFullscreen() {
+      if (imageModal.requestFullscreen) {
+        imageModal.requestFullscreen();
+      } else if (imageModal.webkitRequestFullscreen) {
+        imageModal.webkitRequestFullscreen();
+      } else if (imageModal.msRequestFullscreen) {
+        imageModal.msRequestFullscreen();
+      }
+      isFullscreen = true;
+      fullscreenToggle.classList.add('d-none');
+      closeFullscreen.classList.remove('d-none');
+    }
+
+    function closeFullscreenFunc() {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+      }
+      isFullscreen = false;
+      fullscreenToggle.classList.remove('d-none');
+      closeFullscreen.classList.add('d-none');
+    }
+
+    // Swipe gestures for mobile
+    let touchstartX = 0;
+    let touchendX = 0;
+
+    modalImage.addEventListener('touchstart', function(event) {
+      touchstartX = event.changedTouches[0].screenX;
+    });
+
+    modalImage.addEventListener('touchend', function(event) {
+      touchendX = event.changedTouches[0].screenX;
+      handleGesture();
+    });
+
+    function handleGesture() {
+      if (touchendX < touchstartX - 40) {
+        nextButton.click();
+      }
+      if (touchendX > touchstartX + 40) {
+        prevButton.click();
+      }
+    }
+  });
+
+  // Bulk select / delete controls
+  document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.card-select-checkbox');
+    const bulkBtn = document.getElementById('bulkDeleteBtn');
+
+    function updateBulkBtn() {
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+      if (bulkBtn) bulkBtn.disabled = !anyChecked;
+    }
+
+    if (selectAll) {
+      selectAll.addEventListener('change', function() {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        updateBulkBtn();
+      });
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateBulkBtn));
+    updateBulkBtn();
+  });
+
+  // Property details modal population
+  document.addEventListener('DOMContentLoaded', function () {
+    const detailsModal = document.getElementById('propertyDetailsModal');
+    if (!detailsModal) return;
+    detailsModal.addEventListener('show.bs.modal', function (event) {
+      const btn = event.relatedTarget;
+      const get = (attr) => btn.getAttribute(attr) || '—';
+      document.getElementById('pd-title').textContent = get('data-title');
+      document.getElementById('pd-price').textContent = get('data-price');
+      document.getElementById('pd-type').textContent = get('data-type');
+      document.getElementById('pd-verified').textContent = get('data-verified');
+      document.getElementById('pd-furnished').textContent = get('data-furnished');
+      document.getElementById('pd-location').textContent = get('data-location');
+      document.getElementById('pd-city').textContent = get('data-city');
+      document.getElementById('pd-state').textContent = get('data-state');
+      document.getElementById('pd-country').textContent = get('data-country');
+      document.getElementById('pd-rooms').textContent = get('data-rooms');
+      document.getElementById('pd-bedrooms').textContent = get('data-bedrooms');
+      document.getElementById('pd-bathrooms').textContent = get('data-bathrooms');
+      document.getElementById('pd-length').textContent = get('data-length');
+      document.getElementById('pd-width').textContent = get('data-width');
+      document.getElementById('pd-description').textContent = get('data-description');
+    });
+  });
+
+  // Visibility toggle functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const visibilityToggles = document.querySelectorAll('.visibility-toggle');
+    
+    visibilityToggles.forEach(toggle => {
+      toggle.addEventListener('click', function() {
+        const propertyId = this.getAttribute('data-property-id');
+        const isHidden = this.getAttribute('data-is-hidden') === 'true';
+        
+        // Show loading state
+        const originalIcon = this.querySelector('i');
+        const originalClass = originalIcon.className;
+        originalIcon.className = 'bi bi-arrow-clockwise spin';
+        
+        // Make AJAX request
+        fetch(`/seller/property/${propertyId}/toggle-visibility/`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+          },
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Update button state
+            const newIsHidden = data.is_hidden;
+            this.setAttribute('data-is-hidden', newIsHidden.toString());
+            
+            // Update icon
+            if (newIsHidden) {
+              originalIcon.className = 'bi bi-eye-slash';
+              this.title = 'Show to buyers';
+            } else {
+              originalIcon.className = 'bi bi-eye';
+              this.title = 'Hide from buyers';
+            }
+            
+            // Show success message
+            showNotification(data.message, 'success');
+          } else {
+            // Restore original icon on error
+            originalIcon.className = originalClass;
+            showNotification(data.error || 'Failed to update visibility', 'error');
+          }
+        })
+        .catch(error => {
+          // Restore original icon on error
+          originalIcon.className = originalClass;
+          showNotification('Network error. Please try again.', 'error');
+        });
+      });
+    });
+    
+    // Notification function
+    function showNotification(message, type) {
+      const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+      const notification = document.createElement('div');
+      notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+      notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+      notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Auto remove after 3 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 3000);
+    }
+  });
+
+document.addEventListener('DOMContentLoaded', function () {
+  const updateModal = document.getElementById('updatePropertyModal');
+
+  updateModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const propertyId = button.getAttribute('data-id');
+
+    // ✅ set the form action dynamically using propertyId
+    const form = document.getElementById('updatePropertyForm');
+    form.action = `/seller/property/${propertyId}/edit/`;
+
+    document.getElementById('update_property_id').value = propertyId;
+    document.getElementById('update_title').value = button.getAttribute('data-title');
+    document.getElementById('update_location').value = button.getAttribute('data-location');
+    document.getElementById('update_type').value = button.getAttribute('data-type');
+    document.getElementById('update_price').value = button.getAttribute('data-price');
+    document.getElementById('update_description').value = button.getAttribute('data-description');
+    document.getElementById('update_length').value = button.getAttribute('data-length');
+    document.getElementById('update_width').value = button.getAttribute('data-width');
+    document.getElementById('update_rooms').value = button.getAttribute('data-rooms');
+    document.getElementById('update_bedrooms').value = button.getAttribute('data-bedrooms');
+    document.getElementById('update_bathrooms').value = button.getAttribute('data-bathrooms');
+    document.getElementById('update_furnished').checked = button.getAttribute('data-furnished') === 'True';
+  });
+});
+
+</script>
+{% endblock %}

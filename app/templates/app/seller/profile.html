@@ -1,0 +1,79 @@
+{% extends 'app/seller/seller-base.html' %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 120px;">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold">My Profile</h2>
+    <a href="#" class="btn btn-primary">
+      <i class="bi bi-pencil-square me-1"></i> Edit Profile
+    </a>
+  </div>
+
+  <!-- Profile Card -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+
+      <div class="row">
+        <!-- Profile Image -->
+        <div class="col-md-3 text-center mb-3 mb-md-0">
+          <img src="{% static 'img/user.png' %}" alt="Seller" 
+               class="rounded-circle img-fluid shadow-sm" 
+               style="width: 150px; height: 150px; object-fit: cover;">
+        </div>
+
+        <!-- Profile Info -->
+        <div class="col-md-9">
+          <h4 class="fw-bold mb-1">Alex Johnson</h4>
+          <p class="text-muted mb-3">alex.johnson@example.com</p>
+
+          <div class="row">
+            <div class="col-sm-6 mb-3">
+              <strong>Phone:</strong> <br>
+              <span>+91 9876543210</span>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <strong>Joined:</strong> <br>
+              <span>Jan 10, 2023</span>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <strong>Total Properties:</strong> <br>
+              <span>12</span>
+            </div>
+            <div class="col-sm-6 mb-3">
+              <strong>Status:</strong> <br>
+              <span class="badge bg-success">Active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Activity Section -->
+  <div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-dark text-white fw-semibold">
+      Recent Activity
+    </div>
+    <div class="card-body">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item">
+          <i class="bi bi-clock-history text-primary me-2"></i> Added a new property: <strong>Luxury Villa in Mumbai</strong> on Aug 15, 2025
+        </li>
+        <li class="list-group-item">
+          <i class="bi bi-clock-history text-primary me-2"></i> Updated details of <strong>2BHK Apartment in Pune</strong> on Aug 10, 2025
+        </li>
+        <li class="list-group-item">
+          <i class="bi bi-clock-history text-primary me-2"></i> Responded to message from <strong>Emily Carter</strong> on Aug 08, 2025
+        </li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

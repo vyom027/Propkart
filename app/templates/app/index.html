@@ -1,0 +1,591 @@
+
+{% extends 'app/base.html' %}
+{% load static %}
+{% block title %}Home{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/aos.css' %}" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/tiny-slider.css">
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <div class="hero-slide">
+    <div class="img overlay" style="background-image: url('{% static "images/hero_bg_1.jpg" %}');"></div>
+    <div class="img overlay" style="background-image: url('{% static "images/hero_bg_2.jpg" %}');"></div>
+    <div class="img overlay" style="background-image: url('{% static "images/hero_bg_3.jpg" %}');"></div>
+  </div>
+
+  <div class="container">
+    <div class="row justify-content-center align-items-center">
+      <div class="col-lg-9 text-center">
+        <h1 class="heading" data-aos="fade-up">Easiest way to find your dream home</h1>
+        <form action="#" class="narrow-w form-search d-flex align-items-stretch mb-3" data-aos="fade-up" data-aos-delay="200">
+          <input type="text" class="form-control px-4" placeholder="Your ZIP code or City. e.g. New York" />
+          <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="container">
+    <div class="row mb-5 align-items-center">
+      <div class="col-lg-6">
+        <h2 class="font-weight-bold text-primary heading">Popular Properties</h2>
+      </div>
+      <div class="col-lg-6 text-lg-end">
+        <p><a href="{% url 'property_list' %}" class="btn btn-primary text-white py-3 px-4">View all properties</a></p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div class="property-slider-wrap">
+          <div class="property-slider">
+            {% for property in context.latest_properties %}
+              <div class="property-item mb-4 col-md-4">
+                <a href="#" class="img d-block mb-3" data-bs-toggle="modal" data-bs-target="#propertyModal"
+                  data-id="{{ property.id }}"
+                  data-title="{{ property.title }}"
+                  data-images='{% for img in property.images.all %}{{ img.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}'
+                  data-price="{{ property.price|floatformat:0 }}"
+                  data-address="{{ property.location }}"
+                  data-city="{{ property.city }}"
+                  data-state="{{ property.state }}"
+                  data-country="{{ property.country }}"
+                  data-bedrooms="{{ property.bedrooms }}"
+                  data-bathrooms="{{ property.bathrooms }}"
+                  data-views="{{ property.views }}"
+                  data-description="{{ property.description }}">
+                  <img src="{% if property.images.all %}{{ property.images.all.0.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                    alt="Image for {{ property.title }}" class="img-fluid rounded property-thumbnail" />
+                </a>
+
+                <div class="property-content">
+                  <h5 class="mb-2">{{ property.title }}</h5>
+                  <span class="d-block mb-2 text-muted">Views: <span class="property-views" id="views-{{ property.id }}">{{ property.views }}</span></span>
+
+                  <div class="price mb-2"><span> ₹ {{ property.price|floatformat:0 }}</span></div>
+                  <span class="d-block mb-2 text-black-50">{{ property.location }}</span>
+                  <span class="city d-block mb-3">{{ property.city }}, {{ property.state }}</span>
+
+                  <div class="specs d-flex mb-4">
+                    <span class="d-block d-flex align-items-center me-3">
+                      <span class="icon-bed me-2"></span>
+                      <span class="caption">{{ property.bedrooms }} beds</span>
+                    </span>
+                    <span class="d-block d-flex align-items-center">
+                      <span class="icon-bath me-2"></span>
+                      <span class="caption">{{ property.bathrooms }} baths</span>
+                    </span>
+                  </div>
+
+                  <a href="#" class="btn btn-primary py-2 px-3" data-bs-toggle="modal" data-bs-target="#propertyModal"
+                    data-id="{{ property.id }}"
+                    data-title="{{ property.title }}"
+                    data-images='{% for img in property.images.all %}{{ img.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}'
+                    data-price="{{ property.price|floatformat:0 }}"
+                    data-address="{{ property.location }}"
+                    data-city="{{ property.city }}"
+                    data-state="{{ property.state }}"
+                    data-country="{{ property.country }}"
+                    data-bedrooms="{{ property.bedrooms }}"
+                    data-bathrooms="{{ property.bathrooms }}"
+                    data-views="{{ property.views }}"
+                    data-description="{{ property.description }}">
+                    See details
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<section class="features-1">
+  <div class="container">
+    <div class="row">
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="box-feature">
+          <span class="flaticon-house"></span>
+          <h3 class="mb-3">Our Properties</h3>
+          <p>
+            Explore verified homes, villas, plots and commercial spaces across top cities.
+          </p>
+          <p><a href="#" class="learn-more">Learn More</a></p>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="500">
+        <div class="box-feature">
+          <span class="flaticon-building"></span>
+          <h3 class="mb-3">Property for Sale</h3>
+          <p>
+            Find properties that match your budget, location and lifestyle preferences.
+          </p>
+          <p><a href="#" class="learn-more">Learn More</a></p>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
+        <div class="box-feature">
+          <span class="flaticon-house-3"></span>
+          <h3 class="mb-3">Real Estate Agent</h3>
+          <p>
+            Connect with trusted sellers and get guidance throughout your journey.
+          </p>
+          <p><a href="#" class="learn-more">Learn More</a></p>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="600">
+        <div class="box-feature">
+          <span class="flaticon-house-1"></span>
+          <h3 class="mb-3">House for Sale</h3>
+          <p>
+            Browse ready‑to‑move and under‑construction homes from verified owners.
+          </p>
+          <p><a href="#" class="learn-more">Learn More</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section sec-testimonials">
+  <div class="container">
+    <div class="row mb-5 align-items-center">
+      <div class="col-md-6">
+        <h2 class="font-weight-bold heading text-primary mb-4 mb-md-0">
+          Customer Says
+        </h2>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <div id="testimonial-nav">
+          <span class="prev" data-controls="prev">Prev</span>
+
+          <span class="next" data-controls="next">Next</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-4">
+        
+      </div>
+    </div>
+    <div class="testimonial-slider-wrap">
+      <div class="testimonial-slider">
+        {% for testimonial in testimonials %}
+        <div class="item">
+          <div class="testimonial">
+            <img src="{% static testimonial.image_url %}" alt="Image" class="img-fluid rounded-circle w-25 mb-4" />
+            <div class="rate">
+              {% for i in "12345"|make_list %}
+                {% if forloop.counter <= testimonial.rating %}
+                  <span class="icon-star text-warning"></span>
+                {% else %}
+                  <span class="icon-star"></span>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <h3 class="h5 text-primary mb-4">{{ testimonial.name }}</h3>
+            <blockquote>
+              <p>&ldquo;{{ testimonial.testimonial }}&rdquo;</p>
+            </blockquote>
+            <p class="text-black-50">{{ testimonial.position }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section section-4 bg-light">
+  <div class="container">
+    <div class="row justify-content-center text-center mb-5">
+      <div class="col-lg-5">
+        <h2 class="font-weight-bold heading text-primary mb-4">
+          Let's find home that's perfect for you
+        </h2>
+        <p class="text-black-50">
+          Tell us what you’re looking for and we’ll surface the best matches—
+          price, neighborhood, size and amenities, all in one place.
+        </p>
+      </div>
+    </div>
+    <div class="row justify-content-between mb-5">
+      <div class="col-lg-7 mb-5 mb-lg-0 order-lg-2">
+        <div class="img-about dots">
+          <img src="{% static 'images/hero_bg_3.jpg' %}" alt="Image" class="img-fluid" />
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="d-flex feature-h">
+          <span class="wrap-icon me-3">
+            <span class="icon-home2"></span>
+          </span>
+          <div class="feature-text">
+            <h3 class="heading">2M Properties</h3>
+            <p class="text-black-50">
+              A large and growing inventory to give you more choices in every market.
+            </p>
+          </div>
+        </div>
+
+        <div class="d-flex feature-h">
+          <span class="wrap-icon me-3">
+            <span class="icon-person"></span>
+          </span>
+          <div class="feature-text">
+            <h3 class="heading">Top Rated Agents</h3>
+            <p class="text-black-50">
+              Work with verified sellers and responsive teams for a smooth experience.
+            </p>
+          </div>
+        </div>
+
+        <div class="d-flex feature-h">
+          <span class="wrap-icon me-3">
+            <span class="icon-security"></span>
+          </span>
+          <div class="feature-text">
+            <h3 class="heading">Legit Properties</h3>
+            <p class="text-black-50">
+              Listings are screened for accuracy so you can decide with confidence.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row section-counter mt-5">
+      <div class="col-6 col-sm-6 col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="counter-wrap mb-5 mb-lg-0">
+          <span class="number"><span class="countup text-primary">3298</span></span>
+          <span class="caption text-black-50"># of Buy Properties</span>
+        </div>
+      </div>
+      <div class="col-6 col-sm-6 col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
+        <div class="counter-wrap mb-5 mb-lg-0">
+          <span class="number"><span class="countup text-primary">2181</span></span>
+          <span class="caption text-black-50"># of Sell Properties</span>
+        </div>
+      </div>
+      <div class="col-6 col-sm-6 col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="500">
+        <div class="counter-wrap mb-5 mb-lg-0">
+          <span class="number"><span class="countup text-primary">9316</span></span>
+          <span class="caption text-black-50"># of All Properties</span>
+        </div>
+      </div>
+      <div class="col-6 col-sm-6 col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="600">
+        <div class="counter-wrap mb-5 mb-lg-0">
+          <span class="number"><span class="countup text-primary">7191</span></span>
+          <span class="caption text-black-50"># of Agents</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="propertyModal" tabindex="-1" aria-labelledby="propertyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title" id="modal-title">Property Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-0">
+        
+        <div id="propertyCarousel" class="carousel slide mb-3" data-bs-ride="carousel" data-bs-interval="5000">
+          <div class="carousel-inner rounded" id="modal-images">
+            </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+
+        <div id="modal-thumbnails" class="d-flex justify-content-start flex-wrap mb-4" style="gap: 1rem;">
+          </div>
+
+        <div class="modal-details-section p-4 rounded bg-light mb-4">
+          <h6 class="text-primary mb-3">Property Information</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <p class="mb-1"><strong>Price:</strong> <span class="d-block" id="modal-price"></span></p>
+              <p class="mb-1"><strong>Views:</strong> <span class="d-block" id="modal-views"></span></p>
+              <p class="mb-1"><strong>Address:</strong> <span class="d-block" id="modal-address"></span></p>
+              <p class="mb-1">
+                <strong>Contact:</strong>
+                <span class="d-block " >
+                  <a href="#" id="modal-msg-btn" class="btn btn-sm btn-outline-success mt-2">Send a Message</a>
+                  <a href="#" id="modal-property-btn" class="btn btn-sm btn-outline-primary mt-2 ms-2" target="_blank">
+                    <i class="bi bi-house-door me-1"></i>View Property Page
+                  </a>
+                </span>
+              </p>
+             
+            </div>
+            <div class="col-md-6">
+              <p class="mb-1"><strong>City:</strong> <span class="d-block" id="modal-city"></span></p>
+              <p class="mb-1"><strong>State:</strong> <span class="d-block" id="modal-state"></span></p>
+              <p class="mb-1"><strong>Country:</strong> <span class="d-block" id="modal-country"></span></p>
+              <p class="mb-1">
+                <strong>Specs:</strong>
+                <span class="d-flex align-items-center mt-1">
+                  <span class="icon-bed me-2"></span><span id="modal-bedrooms"></span> &nbsp;beds
+                  <span class="icon-bath me-2 ms-3"></span><span id="modal-bathrooms"></span> &nbsp;baths
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-description-section p-4 rounded border">
+          <h6 class="text-primary mb-3">Description</h6>
+          <p id="modal-description" class="text-black-50"></p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+
+  body.modal-open {
+  overflow: hidden !important;
+  position: relative;
+  height: 100vh;
+}
+
+  /* --- New Modal Styling --- */
+  #propertyModal .modal-content {
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+  #propertyModal .modal-header {
+    padding: 1.5rem 2rem 0;
+  }
+  #propertyModal .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  #propertyModal .modal-body {
+    padding: 1rem 2rem 2rem;
+  }
+  #propertyModal .carousel-item img {
+    height: 400px;
+    object-fit: cover;
+  }
+  #propertyModal .modal-details-section,
+  #propertyModal .modal-description-section {
+    padding: 1.5rem;
+  }
+  .modal-details-section .d-block {
+    font-weight: 400;
+  }
+
+  /* --- Thumbnail Styling --- */
+  .thumbnail-image {
+    width: 100px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    opacity: 0.8;
+  }
+  .thumbnail-image:hover,
+  .thumbnail-image.active {
+    opacity: 1;
+    border-color: var(--bs-primary);
+  }
+
+  /* Slider arrows */
+.property-slider-wrap {
+  position: relative; /* ensure arrows are positioned over slider */
+}
+
+.property-slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: none;
+  padding: 10px 15px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.property-slider-arrow:hover {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+.property-slider-arrow.left {
+  left: 10px;
+}
+
+.property-slider-arrow.right {
+  right: 10px;
+}
+
+</style>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const propertyLinks = document.querySelectorAll('a[data-bs-target="#propertyModal"]');
+
+    propertyLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const propertyId = this.getAttribute('data-id');
+
+            // AJAX request to increment views
+            fetch(`/property/${propertyId}/increment-view/`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Updated views:', data.views);
+            })
+            .catch(err => console.error(err));
+        });
+    });
+});
+  propertyModal.addEventListener('shown.bs.modal', function () {
+  document.body.classList.add('modal-open');
+  document.body.style.overflow = 'hidden';
+});
+
+propertyModal.addEventListener('hidden.bs.modal', function () {
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = '';
+});
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var propertyModal = document.getElementById('propertyModal');
+    propertyModal.addEventListener('show.bs.modal', function (event) {
+      var button = event.relatedTarget;
+
+      var propertyId = button.getAttribute('data-id');
+      var title = button.getAttribute('data-title');
+      var images = button.getAttribute('data-images').split(',');
+      var price = button.getAttribute('data-price');
+      var address = button.getAttribute('data-address');
+      var city = button.getAttribute('data-city');
+      var state = button.getAttribute('data-state');
+      var country = button.getAttribute('data-country');
+      var bedrooms = button.getAttribute('data-bedrooms');
+      var bathrooms = button.getAttribute('data-bathrooms');
+      var description = button.getAttribute('data-description');
+      var views = button.getAttribute('data-views');
+
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-price').textContent = ' ₹ ' + price;
+      document.getElementById('modal-address').textContent = address;
+      document.getElementById('modal-city').textContent = city;
+      document.getElementById('modal-state').textContent = state;
+      document.getElementById('modal-bedrooms').textContent = bedrooms;
+      document.getElementById('modal-bathrooms').textContent = bathrooms;
+      document.getElementById('modal-description').textContent = description;
+      document.getElementById('modal-country').textContent = country;
+      document.getElementById('modal-views').textContent = views + ' views';
+      
+      // Set the property page link
+      document.getElementById('modal-property-btn').href = '/property/' + propertyId + '/';
+
+      // Populate main carousel
+      var carouselInner = document.getElementById('modal-images');
+      carouselInner.innerHTML = '';
+      images.forEach(function(imgUrl, index) {
+        var div = document.createElement('div');
+        div.className = 'carousel-item' + (index === 0 ? ' active' : '');
+        div.innerHTML = `<img src="${imgUrl}" class="d-block w-100 rounded" alt="Property image">`;
+        carouselInner.appendChild(div);
+      });
+
+      // Populate thumbnail gallery
+      var thumbnailContainer = document.getElementById('modal-thumbnails');
+      thumbnailContainer.innerHTML = '';
+      images.forEach(function(imgUrl, index) {
+        var img = document.createElement('img');
+        img.src = imgUrl;
+        img.className = 'thumbnail-image';
+        img.alt = `Thumbnail ${index + 1}`;
+        img.setAttribute('data-bs-target', '#propertyCarousel');
+        img.setAttribute('data-bs-slide-to', index);
+        if (index === 0) {
+          img.classList.add('active');
+        }
+        thumbnailContainer.appendChild(img);
+      });
+      
+      // Handle active class for thumbnails
+      propertyModal.addEventListener('slide.bs.carousel', function (e) {
+        var activeThumb = thumbnailContainer.querySelector('.thumbnail-image.active');
+        if (activeThumb) {
+          activeThumb.classList.remove('active');
+        }
+        thumbnailContainer.querySelectorAll('.thumbnail-image')[e.to].classList.add('active');
+      });
+
+    });
+  });
+
+ document.addEventListener('DOMContentLoaded', function() {
+    var sliderWrap = document.querySelector('.property-slider-wrap');
+    var slider = tns({
+        container: '.property-slider',
+        items: 3,
+        slideBy: 1,
+        mouseDrag: true,
+        nav: false,
+        controls: false,
+        autoplay: false,
+        gutter: 20
+    });
+
+    // Create left arrow
+    const leftArrow = document.createElement('button');
+    leftArrow.innerHTML = '&#8592;';
+    leftArrow.classList.add('property-slider-arrow', 'left');
+    sliderWrap.appendChild(leftArrow);
+
+    // Create right arrow
+    const rightArrow = document.createElement('button');
+    rightArrow.innerHTML = '&#8594;';
+    rightArrow.classList.add('property-slider-arrow', 'right');
+    sliderWrap.appendChild(rightArrow);
+
+    leftArrow.addEventListener('click', () => slider.goTo('prev'));
+    rightArrow.addEventListener('click', () => slider.goTo('next'));
+});
+
+
+</script>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/min/tiny-slider.js"></script>
+
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}My Visit Requests{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 120px;">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold">My Visit Requests</h2>
+      <span class="text-muted">Track your property visit requests</span>
+    </div>
+    <div class="text-end">
+      <a href="{% url 'property_list' %}" class="btn btn-outline-primary">
+        <i class="bi bi-house-door me-2"></i>Browse Properties
+      </a>
+    </div>
+  </div>
+
+  <!-- Visit Request Statistics -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-primary mb-0">{{ total_requests }}</h3>
+          <small class="text-muted">Total Requests</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-warning mb-0">{{ pending_requests }}</h3>
+          <small class="text-muted">Pending</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-success mb-0">{{ approved_requests }}</h3>
+          <small class="text-muted">Approved</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- If no visit requests -->
+  {% if visit_requests.count == 0 %}
+    <div class="alert alert-info text-center shadow-sm">
+      <i class="bi bi-calendar-plus fs-1 text-muted d-block mb-3"></i>
+      <h5>No visit requests yet</h5>
+      <p class="mb-0">Start browsing properties and request visits to see them here.</p>
+      <a href="{% url 'property_list' %}" class="btn btn-primary mt-3">
+        <i class="bi bi-search me-2"></i>Browse Properties
+      </a>
+    </div>
+  {% else %}
+
+    <!-- Visit Requests Cards -->
+    <div class="row">
+      {% for visit_request in visit_requests %}
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">{{ visit_request.property.title|truncatechars:30 }}</h6>
+            <span class="badge bg-{% if visit_request.status == 'pending' %}warning{% elif visit_request.status == 'approved' %}success{% elif visit_request.status == 'rejected' %}danger{% elif visit_request.status == 'completed' %}primary{% else %}secondary{% endif %}">
+              {{ visit_request.status|title }}
+            </span>
+          </div>
+          
+          {% if visit_request.property.images.first %}
+          <img src="{{ visit_request.property.images.first.image.url }}" 
+               class="card-img-top" style="height: 200px; object-fit: cover;">
+          {% endif %}
+          
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <p class="text-muted small mb-0">
+                <i class="bi bi-geo-alt me-1"></i>{{ visit_request.property.location }}
+              </p>
+              <strong class="text-success">₹{{ visit_request.property.price|floatformat:0 }}</strong>
+            </div>
+            
+            <div class="mb-3">
+              <strong>Requested Date:</strong><br>
+              <span class="text-primary">{{ visit_request.preferred_date|date:"M d, Y" }} at {{ visit_request.preferred_time|time:"g:i A" }}</span>
+              {% if visit_request.alternative_date %}
+                <br><small class="text-muted">
+                  Alternative: {{ visit_request.alternative_date|date:"M d, Y" }}
+                  {% if visit_request.alternative_time %}{{ visit_request.alternative_time|time:"g:i A" }}{% endif %}
+                </small>
+              {% endif %}
+            </div>
+            
+            {% if visit_request.confirmed_date %}
+            <div class="alert alert-success py-2 mb-3">
+              <strong><i class="bi bi-check-circle me-1"></i>Confirmed:</strong><br>
+              {{ visit_request.confirmed_date|date:"M d, Y" }}
+              {% if visit_request.confirmed_time %}at {{ visit_request.confirmed_time|time:"g:i A" }}{% endif %}
+            </div>
+            {% endif %}
+            
+            {% if visit_request.seller_response %}
+            <div class="alert alert-light py-2 mb-3">
+              <strong>Seller Response:</strong><br>
+              <small>{{ visit_request.seller_response }}</small>
+            </div>
+            {% endif %}
+            
+            <div class="small text-muted mb-3">
+              <i class="bi bi-calendar me-1"></i>Requested on {{ visit_request.created_at|date:"M d, Y" }}
+            </div>
+          </div>
+          
+          <div class="card-footer bg-transparent">
+            <div class="d-flex justify-content-between align-items-center">
+              <a href="{% url 'property_detail' visit_request.property.id %}" 
+                 class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye me-1"></i>View Property
+              </a>
+              
+              {% if visit_request.status == 'pending' %}
+                <button class="btn btn-sm btn-outline-danger" 
+                        onclick="cancelVisitRequest({{ visit_request.id }})">
+                  <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+              {% elif visit_request.status == 'approved' %}
+                <span class="badge bg-success">
+                  <i class="bi bi-calendar-check me-1"></i>Approved
+                </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  {% endif %}
+</div>
+
+<script>
+function cancelVisitRequest(requestId) {
+  if (confirm('Are you sure you want to cancel this visit request?')) {
+    // Create a form and submit it
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = `/buyer/visit-request/${requestId}/cancel/`;
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,341 @@
+{% extends 'app/seller/seller-base.html' %}
+{% load static %}
+
+{% block title %}Seller Dashboard — PropKart{% endblock %}
+
+{% block extra_css %}
+<style>
+  .dashboard-container {
+    margin-top: 90px;
+    padding: 15px;
+  }
+  
+  .card {
+    border: 1px solid #f0f0f0;
+    border-radius: 14px;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+  }
+  
+  .card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    transform: translateY(-2px);
+  }
+  
+  .stat-card {
+    text-align: center;
+    padding: 20px 15px;
+  }
+  
+  .stat-card h6 {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+  
+  .stat-card h3 {
+    font-size: 1.8rem;
+    margin-bottom: 0;
+  }
+  
+  .table thead.table-secondary th {
+    border-bottom: 0;
+  }
+  
+  .badge-pill {
+    border-radius: 50rem;
+  }
+  
+  .btn-secondary {
+    --bs-btn-bg: var(--bs-secondary);
+    --bs-btn-border-color: var(--bs-secondary);
+  }
+  
+  .btn-outline-secondary {
+    --bs-btn-color: var(--bs-secondary);
+    --bs-btn-border-color: var(--bs-secondary);
+  }
+  
+  .btn-outline-secondary:hover {
+    --bs-btn-bg: var(--bs-secondary);
+    --bs-btn-border-color: var(--bs-secondary);
+  }
+  
+  .profile-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-bottom: 15px;
+  }
+  
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .notification-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .notification-item:last-child {
+    border-bottom: none;
+  }
+  
+  .message-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .message-item:last-child {
+    border-bottom: none;
+  }
+  
+  .quick-shortcut-btn {
+    margin-bottom: 10px;
+    padding: 12px;
+    text-align: left;
+  }
+  
+  .property-table th, .property-table td {
+    padding: 12px 8px;
+  }
+  
+  /* Responsive improvements */
+  @media (max-width: 767px) {
+    .dashboard-container {
+      margin-top: 70px;
+      padding: 10px;
+    }
+    
+    .stat-card {
+      padding: 15px 10px;
+    }
+    
+    .stat-card h6 {
+      font-size: 0.9rem;
+    }
+    
+    .stat-card h3 {
+      font-size: 1.5rem;
+    }
+    
+    .section-title {
+      font-size: 1.1rem;
+    }
+    
+    .profile-img {
+      width: 80px;
+      height: 80px;
+    }
+    
+    .table-responsive {
+      font-size: 0.9rem;
+    }
+    
+    .property-table th, .property-table td {
+      padding: 8px 5px;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .stat-card h3 {
+      font-size: 1.3rem;
+    }
+    
+    .section-title {
+      font-size: 1rem;
+    }
+    
+    .profile-img {
+      width: 70px;
+      height: 70px;
+    }
+    
+    .btn-sm {
+      font-size: 0.8rem;
+      padding: 5px 10px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-container">
+
+  <!-- Top Bar -->
+  <div class="row mb-4">
+    <div class="col-12 d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <h3 class="fw-bold mb-0">Seller Dashboard</h3>
+      <a href="#" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+        <i class="bi bi-plus-circle me-1"></i> Add New Property
+      </a>
+    </div>
+  </div>
+
+  <!-- Overview Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100">
+        <h6 class="fw-bold">Active Listings</h6>
+        <h3 class="text-secondary">{{ prop_count }}</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100">
+        <h6 class="fw-bold">Total Enquiries</h6>
+        <h3 class="text-success">58</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100">
+        <h6 class="fw-bold">Revenue</h6>
+        <h3 class="text-warning">₹2.5L</h3>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card stat-card h-100">
+        <h6 class="fw-bold">Pending Approvals</h6>
+        <h3 class="text-danger">3</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+      <!-- Recent Properties -->
+      <div class="card shadow-sm border-0 p-3">
+        <h5 class="section-title">Recent Properties</h5>
+        <div class="table-responsive">
+          <table class="table property-table align-middle mb-0">
+            <thead class="table-secondary">
+              <tr>
+                <th>Property</th>
+                <th>City</th>
+                <th class="d-none d-sm-table-cell">Price</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Sunset Villa</td>
+                <td>Pune</td>
+                <td class="d-none d-sm-table-cell">₹45,00,000</td>
+                <td><span class="badge bg-success">Active</span></td>
+              </tr>
+              <tr>
+                <td>Lakeview Flat</td>
+                <td>Mumbai</td>
+                <td class="d-none d-sm-table-cell">₹32,50,000</td>
+                <td><span class="badge bg-warning text-dark">Pending</span></td>
+              </tr>
+              <tr>
+                <td>Metro Heights</td>
+                <td>Delhi</td>
+                <td class="d-none d-sm-table-cell">₹60,00,000</td>
+                <td><span class="badge bg-danger">Sold</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="text-end mt-3">
+          <a href="{% url 'my_properties' %}" class="btn btn-sm btn-outline-secondary">
+            View All Properties
+          </a>
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="card shadow-sm border-0 p-3">
+        <h5 class="section-title">Recent Messages</h5>
+        <div class="list-group list-group-flush">
+          <div class="message-item d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <div class="fw-bold">Anita Sharma</div>
+              <div class="small">Interested in "Lakeview Flat", can we schedule a visit?</div>
+            </div>
+            <span class="badge bg-info text-dark rounded-pill mt-2 mt-sm-0">New</span>
+          </div>
+          <div class="message-item d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <div class="fw-bold">Rajesh Kumar</div>
+              <div class="small">Please send more details about "Skyline Apartments".</div>
+            </div>
+            <span class="badge bg-secondary rounded-pill mt-2 mt-sm-0">2d</span>
+          </div>
+          <div class="message-item d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <div class="fw-bold">Meena Patel</div>
+              <div class="small">Thanks for confirming our visit on Friday.</div>
+            </div>
+            <span class="badge bg-success rounded-pill mt-2 mt-sm-0">Read</span>
+          </div>
+        </div>
+        <div class="text-end mt-3">
+          <a href="{% url 'seller_messages' %}" class="btn btn-sm btn-outline-secondary">
+            View All Messages
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+      <!-- Profile Snapshot -->
+      <div class="card shadow-sm border-0 p-4 text-center">
+        <div class="d-flex flex-column align-items-center">
+          {% if request.user.profile_picture %}
+            <img src="{{ request.user.profile_picture.url }}" alt="Profile" class="rounded-circle profile-img img-fluid">
+          {% else %}
+            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center profile-img">
+              <i class="bi bi-person-fill text-secondary" style="font-size: 2.5rem;"></i>
+            </div>
+          {% endif %}
+          <h6 class="fw-bold mb-1">{{ request.user.first_name }} {{ request.user.last_name }}</h6>
+          <p class="text-muted mb-3">Seller Since 2025</p>
+          <a href="{% url 'edit_profile' %}" class="btn btn-outline-secondary btn-sm px-4">Edit Profile</a>
+        </div>
+      </div>
+
+      <!-- Quick Shortcuts -->
+      <div class="card shadow-sm border-0 p-3">
+        <h6 class="section-title mb-3">Quick Shortcuts</h6>
+        <div class="d-grid gap-2">
+          <a href="#" class="btn btn-outline-secondary quick-shortcut-btn" data-bs-toggle="modal" data-bs-target="#addPropertyModal">
+            <i class="bi bi-plus-circle me-2"></i> Add Property
+          </a>
+          <a href="{% url 'seller_enquiries' %}" class="btn btn-outline-success quick-shortcut-btn">
+            <i class="bi bi-chat-dots me-2"></i> Enquiries
+          </a>
+          <a href="{% url 'seller_analytics' %}" class="btn btn-outline-warning quick-shortcut-btn">
+            <i class="bi bi-graph-up-arrow me-2"></i> Analytics
+          </a>
+          <a href="{% url 'seller_support' %}" class="btn btn-outline-danger quick-shortcut-btn">
+            <i class="bi bi-headset me-2"></i> Support
+          </a>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="card shadow-sm border-0 p-3">
+        <h6 class="section-title mb-3">Notifications</h6>
+        <div class="list-group list-group-flush">
+          <div class="notification-item">
+            Your listing <b>"Urban Tower"</b> was approved 🎉
+          </div>
+          <div class="notification-item">
+            New enquiry received for <b>Lakeview Flat</b>
+          </div>
+          <div class="notification-item">
+            Payment of ₹25,000 credited
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock content %}

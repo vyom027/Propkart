@@ -1,0 +1,1164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="author" content="Untree.co" />
+    <link rel="shortcut icon" href="{% static 'favicon.png' %}" />
+
+    <meta name="description" content="" />
+    <meta name="keywords" content="bootstrap, bootstrap5" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="{% static 'app/fonts/icomoon/style.css' %}" />
+    <link rel="stylesheet" href="{% static 'app/fonts/flaticon/font/flaticon.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/tiny-slider.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/aos.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/chat-widget.css' %}" />
+
+    <title>{% block title %}Property{% endblock %} &mdash; PropKart </title>
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+      .flash-message-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050; /* Ensure it's above other elements like modals */
+        max-width: 350px;
+      }
+      /* Prevent overlap between chat header and FAB
+      .chat-widget { margin-bottom: 84px; z-index: 1050; } */
+
+      /* Floating chat button aligned with theme */
+      .chat-fab {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bs-primary);
+        color: #fff;
+        box-shadow: 0 10px 25px rgba(13,110,253, .35);
+        cursor: pointer;
+        z-index: 1049;
+        transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+      }
+      .chat-fab:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(13,110,253, .45); }
+      
+      /* Forget Password Modal Styles */
+      .requirement-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 5px 0;
+        font-size: 14px;
+      }
+      
+      .requirement-check {
+        color: #28a745;
+        font-weight: bold;
+      }
+      
+      .requirement-cross {
+        color: #dc3545;
+        font-weight: bold;
+      }
+      
+      .password-requirements {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+      }
+      
+      .password-requirements h6 {
+        color: #495057;
+        font-weight: 600;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+      
+      .password-requirements ul {
+        margin: 0;
+        padding-left: 0;
+        list-style: none;
+      }
+      
+      .spin {
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      .chat-fab:active { transform: translateY(0); }
+      .chat-fab.pulse { box-shadow: 0 0 0 0 rgba(13,110,253,.4); animation: pulse 1.8s infinite; }
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(13,110,253,.4); }
+        70% { box-shadow: 0 0 0 18px rgba(13,110,253,0); }
+        100% { box-shadow: 0 0 0 0 rgba(13,110,253,0); }
+      }
+      /* Notifications dropdown */
+      .notif-menu { width: min(92vw, 420px); max-height: 80vh; overflow-y: auto; z-index: 2000; }
+      @media (min-width: 992px){ .notif-menu { min-width: 420px; } }
+      /* Constrain inside mobile off-canvas panel (panel narrower than viewport) */
+      @media (max-width: 991.98px){ .site-mobile-menu .notif-menu { width: 100% !important; min-width: 0 !important; } }
+      .notif-item { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 10px 12px; border-bottom: 1px solid #f1f1f1; }
+      .notif-item:last-child { border-bottom: 0; }
+      .notif-title { font-weight: 600; color: #111; word-break: break-word; overflow-wrap: anywhere; }
+      .notif-message { color: #555; font-size: 0.92rem; word-wrap: break-word; overflow-wrap: anywhere; white-space: normal; }
+      .notif-time { color: #888; font-size: 0.8rem; white-space: nowrap; }
+      .notif-empty { padding: 16px; color: #777; }
+      /* Ensure dropdown items wrap text (Bootstrap sets nowrap) */
+      .notif-menu .dropdown-item { white-space: normal; }
+      .site-nav, .site-nav .dropdown, .site-nav .dropdown-menu { overflow: visible !important; }
+    </style>
+  </head>
+  <body>
+    <div class="site-mobile-menu site-navbar-target">
+      <div class="site-mobile-menu-header">
+        <div class="site-mobile-menu-close">
+          <span class="icofont-close js-menu-toggle"></span>
+        </div>
+      </div>
+      <div class="site-mobile-menu-body"></div>
+    </div>
+
+    <nav class="site-nav">
+      <div class="container">
+        <div class="menu-bg-wrap">
+          <div class="site-navigation">
+            <a href="{% url 'index' %}" class="logo m-0 float-start">PropKart</a>
+
+            <ul class="js-clone-nav d-none d-lg-inline-block text-start site-menu float-end">
+              <li class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                <a href="{% url 'index' %}">Home</a>
+              </li>
+              <li class="{% if request.resolver_match.url_name == 'property_list' %}active{% endif %}">
+                <a href="{% url 'property_list' %}">Properties</a>
+              </li>
+              <li class="{% if request.resolver_match.url_name == 'wishlist_list' %}active{% endif %}">
+                <a href="{% url 'wishlist_list' %}">Wishlist</a>
+              </li>
+              <li class="{% if request.resolver_match.url_name == 'buyer_visit_requests' %}active{% endif %}">
+                <a href="{% url 'buyer_visit_requests' %}">My Visits</a>
+              </li>
+              <li class="{% if request.resolver_match.url_name == 'buyer_messages' or request.resolver_match.url_name == 'seller_messages' %}active{% endif %}">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'buyer_messages' %}">Messages</a>
+                {% endif %}
+              </li>
+              
+              {% comment %} <li class="has-children {% if 'properties' in request.path %}active{% endif %}">
+                <a href="#">Properties</a>
+                <ul class="dropdown">
+                  <li><a href="#">Buy Property</a></li>
+                  <li><a href="#">Sell Property</a></li>
+                  <li class="has-children">
+                    <a href="#">Dropdown</a>
+                    <ul class="dropdown">
+                      <li><a href="#">Sub Menu One</a></li>
+                      <li><a href="#">Sub Menu Two</a></li>
+                      <li><a href="#">Sub Menu Three</a></li>
+                    </ul>
+                  </li>
+                </ul>
+              </li> {% endcomment %}
+              
+              <li class="{% if request.resolver_match.url_name == 'aboutUs' %}active{% endif %}">
+                <a href="{% url 'aboutUs' %}">About Us</a>
+              </li>
+              <li class="{% if request.resolver_match.url_name == 'contactUs' %}active{% endif %}">
+                <a href="{% url 'contactUs' %}">Contact Us</a>
+              </li>
+              {% if not user.is_seller %}
+              <li class="{% if request.resolver_match.url_name == 'become_seller' %}active{% endif %}">
+                   <form method="post" action="{% url 'become_seller' %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-primary" >Become Seller</button>
+                    </form>
+               </li>
+               {% else %}
+
+                <li class="{% if request.resolver_match.url_name == 'seller_dashboard' %}active{% endif %}">
+                  <a href="{% url 'seller_dashboard' %}">Seller Dashboard</a>
+
+               {% endif%}
+            {% if user.is_authenticated %}
+              <li class="has-children {% if 'properties' in request.path %}active{% endif %}">
+                <a href="#">{{ user.first_name}} {{ user.last_name}} </a>
+                <ul class="dropdown">
+                  <li><a href="{% url 'profile' %}">Profile</a></li>
+                  <li>
+                    <form method="post" action="{% url 'logout' %}" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" style="background:none; border:none; padding:0; cursor:pointer; font-family:inherit; font-size:inherit;margin-left:20px">Log Out</button>
+                    </form>
+                  </li>
+                </ul>
+              </li>
+              {% else %}
+              <li>
+                <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+              </li>
+              <li>
+                <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#signUpModal">Register</a>
+              </li>
+            {% endif %}
+            <li class="nav-item dropdown d-inline-block me-2">
+              {% if user.is_authenticated %}
+                <a class="nav-link position-relative" href="#" id="notifBell" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
+                  <i class="bi bi-bell" style="font-size:1.25rem;"></i>
+                  <span id="notifBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end p-0 shadow notif-menu" aria-labelledby="notifBell">
+                  <li class="p-2 border-bottom d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">Notifications</span>
+                    <button class="btn btn-sm btn-link" id="notifMarkAll">Mark all read</button>
+                  </li>
+                  <li>
+                    <div id="notifList" class="p-2"></div>
+                  </li>
+                </ul>
+              {% endif %}
+            </li>
+            
+
+            </ul>
+
+            <a href="#" class="burger light me-auto float-end mt-1 site-menu-toggle js-menu-toggle d-inline-block d-lg-none" data-toggle="collapse" data-target="#main-navbar">
+              <span></span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <div class="flash-message-container"></div>
+
+    {% block content %}{% endblock %}
+
+    <div class="modal fade" id="otpModal" tabindex="-1" aria-labelledby="otpModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-4 border-0">
+      <form action="{% url 'verify_otp' %}" method="post">
+        {% csrf_token %}
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-bold" id="otpModalLabel">OTP Verification</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body text-center">
+          <p class="mb-3">We sent a 6-digit OTP to your email. Please enter it below.</p>
+          <div class="d-flex justify-content-center gap-2">
+            <input class="otp-input form-control text-center" type="text" maxlength="1" name="otp_1" autocomplete="off" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 1" required>
+            <input class="otp-input form-control text-center" type="text" maxlength="1" name="otp_2" autocomplete="off" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 1" required>
+            <input class="otp-input form-control text-center" type="text" maxlength="1" name="otp_3" autocomplete="off" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 1" required>
+            <input class="otp-input form-control text-center" type="text" maxlength="1" name="otp_4" autocomplete="off" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 1" required>
+            <input class="otp-input form-control text-center" type="text" maxlength="1" name="otp_5" autocomplete="off" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 1" required>
+            <input class="otp-input form-control text-center" type="text" maxlength="1" name="otp_6" autocomplete="off" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 1" required>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary rounded-pill">Verify</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .otp-input {
+    width: 50px;
+    height: 55px;
+    font-size: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .otp-input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 5px rgba(13,110,253,0.5);
+  }
+</style>
+
+    <div class="modal fade" id="signUpModal" tabindex="-1" aria-labelledby="signUpModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-sm rounded-4">
+          <div class="modal-header border-0 pb-0">
+            <h5 class="modal-title fw-bold" id="signUpModalLabel">Sign Up</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+
+          <div class="modal-body py-3">
+            <form method="post" action="{% url 'register' %}" enctype="multipart/form-data" id="signupForm">
+              {% csrf_token %}
+              <div class="row g-2">
+                <div class="col-6">
+                  <input type="text" class="form-control rounded-pill shadow-sm" id="first_name" name="first_name" placeholder="First Name" required>
+                </div>
+                <div class="col-6">
+                  <input type="text" class="form-control rounded-pill shadow-sm" id="last_name" name="last_name" placeholder="Last Name" required>
+                </div>
+                <div class="col-12 mt-2">
+                  <input type="text" class="form-control rounded-pill shadow-sm" id="username" name="username" placeholder="Username" required>
+                </div>
+                <div class="col-12 mt-2">
+                  <input type="email" class="form-control rounded-pill shadow-sm" id="email" name="email" placeholder="Email" required>
+                </div>
+                <div class="col-12 mt-2">
+                  <div class="input-group">
+                    <input type="password" class="form-control rounded-pill shadow-sm" id="password_signup" name="password" placeholder="Password" required>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" id="togglePasswordSignup">Show</button>
+                  </div>
+                </div>
+                <div class="col-12 mt-2">
+                  <input type="text" class="form-control rounded-pill shadow-sm" id="mobile" name="mobile" placeholder="Mobile">
+                </div>
+                <div class="col-6 mt-2">
+                  <input type="text" class="form-control rounded-pill shadow-sm" id="city" name="city" placeholder="City">
+                </div>
+                <div class="col-6 mt-2">
+                  <input type="text" class="form-control rounded-pill shadow-sm" id="state" name="state" placeholder="State">
+                </div>
+                <div class="col-12 mt-2">
+                  <input type="text" class="form-control rounded-pill shadow-sm" id="country" name="country" placeholder="Country">
+                </div>
+                <div class="col-12 mt-2">
+                  <textarea class="form-control rounded shadow-sm" id="address" name="address" rows="2" placeholder="Address"></textarea>
+                </div>
+                <div class="col-12 mt-2">
+                  <input type="file" class="form-control rounded-pill shadow-sm" id="profile_picture" name="profile_picture">
+                </div>
+              </div>
+
+              <div class="d-grid mt-3">
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill">Sign Up</button>
+              </div>
+
+              <p class="text-center mt-3 mb-0">
+                Already have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Login</a>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="loginModalLabel">Login</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <form method="post" action="{% url 'login' %}" id="loginForm">
+              
+              {% csrf_token %}
+
+              <div class="mb-3">
+                <label for="username" class="form-label">Username </label>
+                <input type="text" class="form-control form-control-lg" id="username" name="username" placeholder="Enter your Username" required>
+              </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                  <input type="password" class="form-control form-control-lg" id="password_login" name="password" placeholder="Enter your password" required>
+                  <button type="button" class="btn btn-outline-secondary" id="togglePasswordLogin">Show</button>
+                </div>
+              </div>
+              <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                <label class="form-check-label" for="remember">Remember me</label>
+              </div>
+              <button type="submit" class="btn btn-primary btn-lg w-100">Login</button>
+              <p class="text-center mt-3">
+                <a href="{% url 'forget_password' %}" class="text-secondary">Forgot Password?</a>
+              </p>
+              <div class="modal-footer">
+                <p class="text-center mb-0">Don't have an account? <a href="#" data-bs-toggle="modal" data-bs-target="#signUpModal" data-bs-dismiss="modal">Sign Up</a></p>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forget Password Modal -->
+    <div class="modal fade" id="forgetPasswordModal" tabindex="-1" aria-labelledby="forgetPasswordModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="forgetPasswordModalLabel">
+              <i class="bi bi-shield-lock me-2"></i>Forgot Password?
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <p class="text-muted mb-4">Enter your email address and we'll send you a verification code to reset your password.</p>
+            
+            <form method="post" action="{% url 'forget_password' %}" id="forgetPasswordForm">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="forget_email" class="form-label">
+                  <i class="bi bi-envelope me-2"></i>Email Address
+                </label>
+                <input type="email" class="form-control form-control-lg" id="forget_email" name="email" placeholder="Enter your email address" required>
+              </div>
+              
+              <button type="submit" class="btn btn-primary btn-lg w-100" id="forgetPasswordBtn">
+                <i class="bi bi-send me-2"></i>Send Reset Code
+              </button>
+            </form>
+            
+            <div class="modal-footer">
+              <p class="text-center mb-0">Remember your password? <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">Back to Login</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verify OTP Modal -->
+    <div class="modal fade" id="verifyOtpModal" tabindex="-1" aria-labelledby="verifyOtpModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="verifyOtpModalLabel">
+              <i class="bi bi-key me-2"></i>Enter Verification Code
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <p class="text-muted mb-4">We've sent a 6-digit verification code to your email address. Please enter it below.</p>
+            
+            <form method="post" id="verifyOtpForm">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="otp_input" class="form-label">Verification Code</label>
+                <input type="text" class="form-control form-control-lg text-center" id="otp_input" name="otp" placeholder="000000" maxlength="6" pattern="[0-9]{6}" required style="font-size: 24px; letter-spacing: 8px; font-family: 'Courier New', monospace;">
+              </div>
+              
+              <button type="submit" class="btn btn-primary btn-lg w-100" id="verifyOtpBtn">
+                <i class="bi bi-check-circle me-2"></i>Verify Code
+              </button>
+            </form>
+            
+            <div class="text-center mt-3">
+              <p class="text-muted">Didn't receive the code?</p>
+              <a href="#" data-bs-toggle="modal" data-bs-target="#forgetPasswordModal" data-bs-dismiss="modal" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-clockwise me-2"></i>Resend Code
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reset Password Modal -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="resetPasswordModalLabel">
+              <i class="bi bi-shield-check me-2"></i>Set New Password
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body p-4">
+            <p class="text-muted mb-4">Great! Your OTP has been verified. Now please create a strong new password for your account.</p>
+            
+            <form method="post" action="{% url 'reset_password' %}" id="resetPasswordForm">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="new_password" class="form-label">
+                  <i class="bi bi-lock me-2"></i>New Password
+                </label>
+                <div class="input-group">
+                  <input type="password" class="form-control form-control-lg" id="new_password" name="new_password" placeholder="Enter your new password" required minlength="8">
+                  <button type="button" class="btn btn-outline-secondary" id="toggleNewPassword">Show</button>
+                </div>
+                <div class="password-strength mt-2">
+                  <div class="progress" style="height: 4px;">
+                    <div class="progress-bar" id="strengthBar" role="progressbar" style="width: 0%"></div>
+                  </div>
+                  <small id="strengthText" class="text-muted">Password strength</small>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label for="confirm_password" class="form-label">
+                  <i class="bi bi-lock-fill me-2"></i>Confirm Password
+                </label>
+                <div class="input-group">
+                  <input type="password" class="form-control form-control-lg" id="confirm_password" name="confirm_password" placeholder="Confirm your new password" required minlength="8">
+                  <button type="button" class="btn btn-outline-secondary" id="toggleConfirmPassword">Show</button>
+                </div>
+                <div id="passwordMatch" class="mt-1"></div>
+              </div>
+              
+              <button type="submit" class="btn btn-success btn-lg w-100" id="resetPasswordBtn" disabled>
+                <i class="bi bi-check-circle me-2"></i>Reset Password
+              </button>
+            </form>
+            
+            <div class="password-requirements mt-3">
+              <h6 class="text-primary">
+                <i class="bi bi-shield-lock me-2"></i>Password Requirements
+              </h6>
+              <ul class="list-unstyled mb-0">
+                <li class="requirement-item">
+                  <span id="req-length" class="requirement-cross">✗</span>
+                  At least 8 characters long
+                </li>
+                <li class="requirement-item">
+                  <span id="req-uppercase" class="requirement-cross">✗</span>
+                  Contains uppercase letter
+                </li>
+                <li class="requirement-item">
+                  <span id="req-lowercase" class="requirement-cross">✗</span>
+                  Contains lowercase letter
+                </li>
+                <li class="requirement-item">
+                  <span id="req-number" class="requirement-cross">✗</span>
+                  Contains number
+                </li>
+                <li class="requirement-item">
+                  <span id="req-match" class="requirement-cross">✗</span>
+                  Passwords match
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="site-footer">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-4">
+            <div class="widget">
+              <h3>Contact</h3>
+              <address>43 Raymouth Rd. Baltemoer, London 3910</address>
+              <ul class="list-unstyled links">
+                <li><a href="tel://11234567890">+1(123)-456-7890</a></li>
+                <li><a href="tel://11234567890">+1(123)-456-7890</a></li>
+                <li><a href="mailto:info@mydomain.com">info@mydomain.com</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="widget">
+              <h3>Sources</h3>
+              <ul class="list-unstyled float-start links">
+                <li><a href="#">About us</a></li>
+                <li><a href="#">Services</a></li>
+                <li><a href="#">Vision</a></li>
+                <li><a href="#">Mission</a></li>
+                <li><a href="#">Terms</a></li>
+                <li><a href="#">Privacy</a></li>
+              </ul>
+              <ul class="list-unstyled float-start links">
+                <li><a href="#">Partners</a></li>
+                <li><a href="#">Business</a></li>
+                <li><a href="#">Careers</a></li>
+                <li><a href="#">Blog</a></li>
+                <li><a href="#">FAQ</a></li>
+                <li><a href="#">Creative</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="widget">
+              <h3>Links</h3>
+              <ul class="list-unstyled links">
+                <li><a href="#">Our Vision</a></li>
+                <li><a href="#">About us</a></li>
+                <li><a href="#">Contact us</a></li>
+              </ul>
+
+              <ul class="list-unstyled social">
+                <li><a href="#"><span class="icon-instagram"></span></a></li>
+                <li><a href="#"><span class="icon-twitter"></span></a></li>
+                <li><a href="#"><span class="icon-facebook"></span></a></li>
+                <li><a href="#"><span class="icon-linkedin"></span></a></li>
+                <li><a href="#"><span class="icon-pinterest"></span></a></li>
+                <li><a href="#"><span class="icon-dribbble"></span></a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mt-5">
+          <div class="col-12 text-center">
+            <p>
+              Copyright &copy; {% now "Y" %}. All Rights Reserved. &mdash; Designed with love by <a href="https://untree.co">Untree.co</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="overlayer"></div>
+    <div class="loader">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+<div class="flash-message-container">
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endif %}
+
+  {% if success %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      {{ success }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endif %}
+</div>
+
+    <script>
+      // OTP auto move forward & backward
+document.querySelectorAll(".otp-input").forEach((input, index, inputs) => {
+  input.addEventListener("input", function(e) {
+    if (this.value && index < inputs.length - 1) {
+      inputs[index + 1].focus();
+    }
+  });
+
+  input.addEventListener("keydown", function(e) {
+    if (e.key === "Backspace" && !this.value && index > 0) {
+      inputs[index - 1].focus();
+    }
+  });
+});
+
+
+
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const flashMessageContainer = document.querySelector('.flash-message-container');
+
+        // Function to show a flash message
+        function showFlashMessage(message, type) {
+          const alert = document.createElement('div');
+          alert.className = `alert alert-${type} alert-dismissible fade show`;
+          alert.setAttribute('role', 'alert');
+          alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          `;
+          flashMessageContainer.appendChild(alert);
+
+          // Automatically fade out the alert after 5 seconds
+          setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+          }, 5000);
+        }
+
+        // Check for and display messages from Django context
+       
+        // Password toggle for Sign Up modal
+        const togglePasswordSignup = document.getElementById('togglePasswordSignup');
+        const passwordSignup = document.getElementById('password_signup');
+        if (togglePasswordSignup && passwordSignup) {
+          togglePasswordSignup.addEventListener('click', function () {
+            const type = passwordSignup.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordSignup.setAttribute('type', type);
+            this.textContent = (this.textContent === 'Show') ? 'Hide' : 'Show';
+          });
+        }
+
+        // Password toggle for Login modal
+        const togglePasswordLogin = document.getElementById('togglePasswordLogin');
+        const passwordLogin = document.getElementById('password_login');
+        if (togglePasswordLogin && passwordLogin) {
+          togglePasswordLogin.addEventListener('click', function () {
+            const type = passwordLogin.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordLogin.setAttribute('type', type);
+            this.textContent = (this.textContent === 'Show') ? 'Hide' : 'Show';
+          });
+        }
+
+        // Show OTP modal if context variable is set
+        {% if show_otp_modal %}
+            var otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+            otpModal.show();
+        {% endif %}
+    });
+    </script>
+   <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        {% if request.session.show_otp_modal %}
+          var otpModal = new bootstrap.Modal(document.getElementById('otpModal'));
+          otpModal.show();
+        {% endif %}
+
+        {% if request.session.show_signup_modal %}
+          var signupModal = new bootstrap.Modal(document.getElementById('signupModal'));
+          signupModal.show();
+        {% endif %}
+      });
+      
+  document.addEventListener("DOMContentLoaded", function () {
+    {% if messages %}
+      {% for message in messages %}
+        if ("{{ message }}" === "Please log in to continue.") {
+          const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+          loginModal.show();
+        }
+      {% endfor %}
+    {% endif %}
+  });
+
+
+      </script>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'js/tiny-slider.js' %}"></script>
+    <script src="{% static 'js/aos.js' %}"></script>
+    <script src="{% static 'js/navbar.js' %}"></script>
+    <script src="{% static 'js/counter.js' %}"></script>
+    <script src="{% static 'js/custom.js' %}"></script>
+    <script src="{% static 'js/chat-widget.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+    <script>
+      (function(){
+        const bells = document.querySelectorAll('#notifBell');
+        if (!bells.length) return;
+        function getCookie(name){ const m=document.cookie.match('(^|;)\\s*'+name+'\\s*=\\s*([^;]+)'); return m?m.pop():''; }
+        const CSRF = getCookie('csrftoken');
+        bells.forEach((bell)=>{
+          // Initialize dropdown
+          if (window.bootstrap && bootstrap.Dropdown) {
+            try {
+              new bootstrap.Dropdown(bell, {
+                autoClose: 'outside',
+                popperConfig: (defaultBs) => ({
+                  ...defaultBs,
+                  strategy: 'fixed',
+                  modifiers: [
+                    ...(defaultBs?.modifiers||[]),
+                    { name: 'preventOverflow', options: { boundary: 'viewport' } },
+                    { name: 'flip', options: { fallbackPlacements: ['bottom', 'top', 'right', 'left'] } }
+                  ]
+                })
+              });
+            } catch(_) {}
+          }
+          const dropdownContainer = bell.closest('li');
+          const dropdownMenu = dropdownContainer ? dropdownContainer.querySelector('.dropdown-menu') : null;
+          const badge = bell ? bell.querySelector('#notifBadge') : null;
+          const list = dropdownMenu ? dropdownMenu.querySelector('#notifList') : null;
+          const markAll = dropdownMenu ? dropdownMenu.querySelector('#notifMarkAll') : null;
+          async function loadNotifs(){
+            try {
+              const resp = await fetch('{% url 'notifications_list' %}?status=all');
+              const data = await resp.json();
+              const unread = data.unread || 0;
+              if (badge){
+                if (unread > 0){
+                  badge.classList.remove('d-none');
+                  badge.textContent = unread > 9 ? '9+' : unread;
+                } else {
+                  badge.classList.add('d-none');
+                }
+              }
+              const items = data.items || [];
+              if (list) list.innerHTML = items.length ? '' : '<div class="notif-empty">No notifications</div>';
+              
+              items.forEach(n => {
+                const row = document.createElement('a');
+                row.className = 'dropdown-item notif-item text-reset';
+                row.href = n.url || '#';
+                row.innerHTML = '<div class="notif-title">' + (n.title || 'Notification') + '</div>'
+                  + (n.message ? '<div class="notif-message">' + n.message + '</div>' : '<div class="notif-message">&nbsp;</div>')
+                  + '<div class="notif-time">' + new Date(n.created_at).toLocaleString() + '</div>';
+                row.addEventListener('click', async ()=>{
+                  try {
+                    const fd = new FormData();
+                    fd.append('ids', String(n.id));
+                    await fetch('{% url 'notifications_mark_read' %}', { method: 'POST', headers: { 'X-CSRFToken': CSRF }, body: fd });
+                  } catch(_) {}
+                });
+                if (list) list.appendChild(row);
+              });
+            } catch(_) {}
+          }
+          if (markAll){
+            markAll.addEventListener('click', async (e)=>{
+              e.preventDefault();
+              try {
+                await fetch('{% url 'notifications_mark_all_read' %}', { method: 'POST', headers: { 'X-CSRFToken': CSRF } });
+                await loadNotifs();
+              } catch(_) {}
+            });
+          }
+          loadNotifs();
+          bell.addEventListener('shown.bs.dropdown', loadNotifs);
+          setInterval(loadNotifs, 5000);
+        });
+      })();
+
+      // Forget Password Modal Functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        let currentTokenId = null;
+        
+        // Forget Password Form
+        const forgetPasswordForm = document.getElementById('forgetPasswordForm');
+        if (forgetPasswordForm) {
+          forgetPasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('forgetPasswordBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>Sending...';
+            
+            const formData = new FormData(this);
+            console.log('Form action:', this.action);
+            console.log('Form data:', Object.fromEntries(formData));
+            
+            fetch(this.action, {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+              }
+            })
+            .then(response => {
+              console.log('Response status:', response.status);
+              console.log('Response headers:', response.headers);
+              if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+              }
+              return response.text().then(text => {
+                console.log('Raw response:', text);
+                try {
+                  return JSON.parse(text);
+                } catch (e) {
+                  console.error('JSON parse error:', e);
+                  console.error('Response text:', text);
+                  throw new Error('Invalid JSON response');
+                }
+              });
+            })
+            .then(data => {
+              console.log('Parsed response data:', data);
+              if (data.success) {
+                // Show success message
+                showFlashMessage(data.message, 'success');
+                // Close current modal and open OTP modal
+                bootstrap.Modal.getInstance(document.getElementById('forgetPasswordModal')).hide();
+                setTimeout(() => {
+                  const verifyModal = new bootstrap.Modal(document.getElementById('verifyOtpModal'));
+                  verifyModal.show();
+                  // Store token_id for OTP verification
+                  currentTokenId = data.token_id;
+                  console.log('Stored token_id:', currentTokenId);
+                }, 300);
+              } else {
+                showFlashMessage(data.error, 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-send me-2"></i>Send Reset Code';
+              }
+            })
+            .catch(error => {
+              console.error('Detailed error:', error);
+              showFlashMessage(`Error: ${error.message}`, 'danger');
+              btn.disabled = false;
+              btn.innerHTML = '<i class="bi bi-send me-2"></i>Send Reset Code';
+            });
+          });
+        }
+
+        // OTP Input Auto-format
+        const otpInput = document.getElementById('otp_input');
+        if (otpInput) {
+          otpInput.addEventListener('input', function(e) {
+            // Remove non-numeric characters
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            // Limit to 6 digits
+            if (this.value.length > 6) {
+              this.value = this.value.slice(0, 6);
+            }
+            
+            // Auto-submit when 6 digits are entered
+            if (this.value.length === 6) {
+              setTimeout(() => {
+                document.getElementById('verifyOtpForm').submit();
+              }, 500);
+            }
+          });
+        }
+
+        // Verify OTP Form
+        const verifyOtpForm = document.getElementById('verifyOtpForm');
+        if (verifyOtpForm) {
+          verifyOtpForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('verifyOtpBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>Verifying...';
+            
+            const formData = new FormData(this);
+            formData.append('token_id', currentTokenId);
+            
+            fetch(`/verify-password-reset-otp/${currentTokenId}/`, {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // Show success message
+                showFlashMessage(data.message, 'success');
+                // Close current modal and open reset password modal
+                bootstrap.Modal.getInstance(document.getElementById('verifyOtpModal')).hide();
+                setTimeout(() => {
+                  const resetModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+                  resetModal.show();
+                }, 300);
+              } else {
+                showFlashMessage(data.error, 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Verify Code';
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              showFlashMessage('Network error. Please try again.', 'danger');
+              btn.disabled = false;
+              btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Verify Code';
+            });
+          });
+        }
+
+        // Password Strength Checker
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+        const resetPasswordBtn = document.getElementById('resetPasswordBtn');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+
+        function checkPasswordStrength(password) {
+          let strength = 0;
+          let requirements = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /\d/.test(password)
+          };
+          
+          // Update requirement indicators
+          document.getElementById('req-length').className = requirements.length ? 'requirement-check' : 'requirement-cross';
+          document.getElementById('req-uppercase').className = requirements.uppercase ? 'requirement-check' : 'requirement-cross';
+          document.getElementById('req-lowercase').className = requirements.lowercase ? 'requirement-check' : 'requirement-cross';
+          document.getElementById('req-number').className = requirements.number ? 'requirement-check' : 'requirement-cross';
+          
+          // Calculate strength
+          Object.values(requirements).forEach(req => {
+            if (req) strength++;
+          });
+          
+          // Update strength bar
+          strengthBar.className = 'progress-bar';
+          if (strength <= 1) {
+            strengthBar.classList.add('bg-danger');
+            strengthText.textContent = 'Weak password';
+            strengthBar.style.width = '25%';
+          } else if (strength === 2) {
+            strengthBar.classList.add('bg-warning');
+            strengthText.textContent = 'Fair password';
+            strengthBar.style.width = '50%';
+          } else if (strength === 3) {
+            strengthBar.classList.add('bg-info');
+            strengthText.textContent = 'Good password';
+            strengthBar.style.width = '75%';
+          } else {
+            strengthBar.classList.add('bg-success');
+            strengthText.textContent = 'Strong password';
+            strengthBar.style.width = '100%';
+          }
+          
+          return strength;
+        }
+
+        function checkPasswordMatch() {
+          const newPassword = newPasswordInput.value;
+          const confirmPassword = confirmPasswordInput.value;
+          const passwordMatch = document.getElementById('passwordMatch');
+          
+          if (confirmPassword && newPassword !== confirmPassword) {
+            passwordMatch.innerHTML = '<small class="text-danger">Passwords do not match</small>';
+            document.getElementById('req-match').className = 'requirement-cross';
+            return false;
+          } else if (confirmPassword && newPassword === confirmPassword) {
+            passwordMatch.innerHTML = '<small class="text-success">Passwords match</small>';
+            document.getElementById('req-match').className = 'requirement-check';
+            return true;
+          } else {
+            passwordMatch.innerHTML = '';
+            document.getElementById('req-match').className = 'requirement-cross';
+            return false;
+          }
+        }
+
+        function validateForm() {
+          const newPassword = newPasswordInput.value;
+          const confirmPassword = confirmPasswordInput.value;
+          
+          const strength = checkPasswordStrength(newPassword);
+          const match = checkPasswordMatch();
+          
+          const isValid = strength >= 3 && match && newPassword.length >= 8;
+          resetPasswordBtn.disabled = !isValid;
+        }
+
+        if (newPasswordInput) {
+          newPasswordInput.addEventListener('input', validateForm);
+        }
+        if (confirmPasswordInput) {
+          confirmPasswordInput.addEventListener('input', validateForm);
+        }
+
+        // Password Toggle Functionality
+        const toggleNewPassword = document.getElementById('toggleNewPassword');
+        const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+
+        if (toggleNewPassword) {
+          toggleNewPassword.addEventListener('click', function() {
+            const input = newPasswordInput;
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            this.textContent = type === 'password' ? 'Show' : 'Hide';
+          });
+        }
+
+        if (toggleConfirmPassword) {
+          toggleConfirmPassword.addEventListener('click', function() {
+            const input = confirmPasswordInput;
+            const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+            input.setAttribute('type', type);
+            this.textContent = type === 'password' ? 'Show' : 'Hide';
+          });
+        }
+
+        // Reset Password Form
+        const resetPasswordForm = document.getElementById('resetPasswordForm');
+        if (resetPasswordForm) {
+          resetPasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            resetPasswordBtn.disabled = true;
+            resetPasswordBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin me-2"></i>Resetting Password...';
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+              method: 'POST',
+              body: formData,
+              headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+              }
+            })
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                // Show success message
+                showFlashMessage(data.message, 'success');
+                // Close current modal and open login modal
+                bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
+                setTimeout(() => {
+                  const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                  loginModal.show();
+                }, 300);
+              } else {
+                showFlashMessage(data.error, 'danger');
+                resetPasswordBtn.disabled = false;
+                resetPasswordBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Reset Password';
+              }
+            })
+            .catch(error => {
+              showFlashMessage('Network error. Please try again.', 'danger');
+              resetPasswordBtn.disabled = false;
+              resetPasswordBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Reset Password';
+            });
+          });
+        }
+
+        // Handle modal transitions
+        const forgetPasswordModal = document.getElementById('forgetPasswordModal');
+        const verifyOtpModal = document.getElementById('verifyOtpModal');
+        const resetPasswordModal = document.getElementById('resetPasswordModal');
+
+        if (forgetPasswordModal) {
+          forgetPasswordModal.addEventListener('hidden.bs.modal', function() {
+            // Reset form when modal is closed
+            forgetPasswordForm.reset();
+            const btn = document.getElementById('forgetPasswordBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-send me-2"></i>Send Reset Code';
+          });
+        }
+
+        if (verifyOtpModal) {
+          verifyOtpModal.addEventListener('hidden.bs.modal', function() {
+            // Reset form when modal is closed
+            verifyOtpForm.reset();
+            const btn = document.getElementById('verifyOtpBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Verify Code';
+          });
+        }
+
+        if (resetPasswordModal) {
+          resetPasswordModal.addEventListener('hidden.bs.modal', function() {
+            // Reset form when modal is closed
+            resetPasswordForm.reset();
+            const btn = document.getElementById('resetPasswordBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Reset Password';
+            strengthBar.style.width = '0%';
+            strengthText.textContent = 'Password strength';
+            document.getElementById('passwordMatch').innerHTML = '';
+            // Reset requirement indicators
+            document.querySelectorAll('.requirement-item span').forEach(span => {
+              span.className = 'requirement-cross';
+            });
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

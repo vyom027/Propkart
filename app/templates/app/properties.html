@@ -1,0 +1,1500 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}Properties{% endblock %}
+
+{% block content %}
+<!-- Enhanced Hero Section -->
+<div class="hero page-inner overlay" style="background-image: url('{% static "images/hero_bg_1.jpg" %}')">
+  <div class="container">
+    <div class="row justify-content-center align-items-center">
+      <div class="col-lg-10 text-center mt-5">
+        <h1 class="heading mb-4" data-aos="fade-up">Find Your Dream Property</h1>
+        <p class="lead text-white mb-4" data-aos="fade-up" data-aos-delay="200">
+          Discover amazing properties across India with our advanced search and filter system
+        </p>
+        
+        <!-- Quick Search Bar -->
+        <div class="search-hero-container" data-aos="fade-up" data-aos-delay="400">
+          <div class="row justify-content-center">
+            <div class="col-lg-8">
+              <div class="search-bar-wrapper">
+                <div class="input-group input-group-lg">
+                  <span class="input-group-text bg-white border-0">
+                    <i class="bi bi-geo-alt text-primary"></i>
+                  </span>
+                  <input type="text" class="form-control border-0 shadow-sm" placeholder="Enter city, area, or landmark" id="heroSearch">
+                  <button class="btn btn-primary px-4" onclick="performHeroSearch()">
+                    <i class="bi bi-search me-2"></i>Search
+                  </button>
+                </div>
+                <div class="search-suggestions mt-3">
+                  <span class="text-white-50 me-3">Popular:</span>
+                  <a href="#" class="badge bg-white text-primary me-2 mb-2" onclick="searchByLocation('Mumbai')">Mumbai</a>
+                  <a href="#" class="badge bg-white text-primary me-2 mb-2" onclick="searchByLocation('Delhi')">Delhi</a>
+                  <a href="#" class="badge bg-white text-primary me-2 mb-2" onclick="searchByLocation('Bangalore')">Bangalore</a>
+                  <a href="#" class="badge bg-white text-primary me-2 mb-2" onclick="searchByLocation('Pune')">Pune</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <nav aria-label="breadcrumb" data-aos="fade-up" data-aos-delay="600">
+          <ol class="breadcrumb text-center justify-content-center">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}" class="text-white">Home</a></li>
+            <li class="breadcrumb-item active text-white-50" aria-current="page">Properties</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Featured Properties Section (Hidden) -->
+<div class="section" style="display: none;">
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <div class="property-slider-wrap">
+          <div class="property-slider">
+            {% for property in featured_properties %}
+            <div class="property-item">
+              <a href="" class="img">
+                <img src="{{ property.image.url }}" alt="Image" class="img-fluid" />
+              </a>
+
+              <div class="property-content">
+                <div class="price mb-2"><span>₹{{ property.price|floatformat:0 }}</span></div>
+                <div>
+                  <span class="d-block mb-2 text-black-50">{{ property.location }}</span>
+                  <span class="city d-block mb-3">{{ property.city }}, {{ property.state }}</span>
+
+                  <div class="specs d-flex mb-4">
+                    <span class="d-block d-flex align-items-center me-3">
+                      <span class="icon-bed me-2"></span>
+                      <span class="caption">{{ property.bedrooms }} beds</span>
+                    </span>
+                    <span class="d-block d-flex align-items-center">
+                      <span class="icon-bath me-2"></span>
+                      <span class="caption">{{ property.bathrooms }} baths</span>
+                    </span>
+                  </div>
+
+                  <a href="" class="btn btn-primary py-2 px-3">See details</a>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Properties Section -->
+<div class="section section-properties bg-light">
+  <div class="container">
+    <!-- Properties Header -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="properties-header-card">
+          <div class="row align-items-center">
+            <div class="col-md-6">
+              <h3 class="mb-1">
+                <span id="propertiesCount">{{ properties|length }}</span> Properties Found
+              </h3>
+              <p class="text-muted mb-0">Discover your perfect home</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <div class="sort-controls">
+                <label class="form-label me-2">Sort by:</label>
+                <select class="form-select d-inline-block w-auto" id="sortBy" onchange="applySorting()">
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="views">Most Viewed</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      
+      <!-- Enhanced Filter Sidebar -->
+      <div class="col-lg-3 mb-4">
+        <div class="filter-sidebar-enhanced">
+          <div class="filter-header-enhanced">
+            <h5 class="mb-3">
+              <i class="bi bi-funnel me-2"></i>Filter Properties
+            </h5>
+            <button class="btn btn-outline-primary btn-sm" onclick="clearAllFilters()">
+              <i class="bi bi-arrow-clockwise me-1"></i>Clear All
+            </button>
+          </div>
+          
+          <!-- Property Type Filter -->
+          <div class="filter-section mb-4">
+            <h6 class="filter-title" data-bs-toggle="collapse" data-bs-target="#typeFilter" aria-expanded="true">
+              <i class="bi bi-house me-2"></i>Property Type
+              <i class="bi bi-chevron-down float-end"></i>
+            </h6>
+            <div class="collapse show" id="typeFilter">
+              <div class="filter-options">
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="apartment" id="type-apartment" onchange="applyFilters()">
+                  <label class="form-check-label" for="type-apartment">Apartment</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="house" id="type-house" onchange="applyFilters()">
+                  <label class="form-check-label" for="type-house">House</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="villa" id="type-villa" onchange="applyFilters()">
+                  <label class="form-check-label" for="type-villa">Villa</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="land" id="type-land" onchange="applyFilters()">
+                  <label class="form-check-label" for="type-land">Land</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="commercial" id="type-commercial" onchange="applyFilters()">
+                  <label class="form-check-label" for="type-commercial">Commercial</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Price Range Filter -->
+          <div class="filter-section mb-4">
+            <h6 class="filter-title" data-bs-toggle="collapse" data-bs-target="#priceFilter" aria-expanded="true">
+              <i class="bi bi-currency-rupee me-2"></i>Price Range
+              <i class="bi bi-chevron-down float-end"></i>
+            </h6>
+            <div class="collapse show" id="priceFilter">
+              <div class="filter-options">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <input type="number" class="form-control form-control-sm" id="minPrice" placeholder="Min Price" onchange="applyFilters()">
+                  </div>
+                  <div class="col-6">
+                    <input type="number" class="form-control form-control-sm" id="maxPrice" placeholder="Max Price" onchange="applyFilters()">
+                  </div>
+                </div>
+                <div class="price-ranges mt-2">
+                  <button class="btn btn-outline-primary btn-sm me-1 mb-1" onclick="setPriceRange(0, 1000000)">Under ₹10L</button>
+                  <button class="btn btn-outline-primary btn-sm me-1 mb-1" onclick="setPriceRange(1000000, 5000000)">₹10L - ₹50L</button>
+                  <button class="btn btn-outline-primary btn-sm me-1 mb-1" onclick="setPriceRange(5000000, 10000000)">₹50L - ₹1Cr</button>
+                  <button class="btn btn-outline-primary btn-sm mb-1" onclick="setPriceRange(10000000, 999999999)">Above ₹1Cr</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Bedrooms Filter -->
+          <div class="filter-section mb-4">
+            <h6 class="filter-title" data-bs-toggle="collapse" data-bs-target="#bedroomFilter" aria-expanded="true">
+              <i class="bi bi-bed me-2"></i>Bedrooms
+              <i class="bi bi-chevron-down float-end"></i>
+            </h6>
+            <div class="collapse show" id="bedroomFilter">
+              <div class="filter-options">
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="1" id="bed-1" onchange="applyFilters()">
+                  <label class="form-check-label" for="bed-1">1 Bedroom</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="2" id="bed-2" onchange="applyFilters()">
+                  <label class="form-check-label" for="bed-2">2 Bedrooms</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="3" id="bed-3" onchange="applyFilters()">
+                  <label class="form-check-label" for="bed-3">3 Bedrooms</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="4" id="bed-4" onchange="applyFilters()">
+                  <label class="form-check-label" for="bed-4">4+ Bedrooms</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Bathrooms Filter -->
+          <div class="filter-section mb-4">
+            <h6 class="filter-title" data-bs-toggle="collapse" data-bs-target="#bathroomFilter" aria-expanded="true">
+              <i class="bi bi-droplet me-2"></i>Bathrooms
+              <i class="bi bi-chevron-down float-end"></i>
+            </h6>
+            <div class="collapse show" id="bathroomFilter">
+              <div class="filter-options">
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="1" id="bath-1" onchange="applyFilters()">
+                  <label class="form-check-label" for="bath-1">1 Bathroom</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="2" id="bath-2" onchange="applyFilters()">
+                  <label class="form-check-label" for="bath-2">2 Bathrooms</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="3" id="bath-3" onchange="applyFilters()">
+                  <label class="form-check-label" for="bath-3">3+ Bathrooms</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Location Filter -->
+          <div class="filter-section mb-4">
+            <h6 class="filter-title" data-bs-toggle="collapse" data-bs-target="#locationFilter" aria-expanded="true">
+              <i class="bi bi-geo-alt me-2"></i>Location
+              <i class="bi bi-chevron-down float-end"></i>
+            </h6>
+            <div class="collapse show" id="locationFilter">
+              <div class="filter-options">
+                <div class="mb-3">
+                  <label class="form-label small">City</label>
+                  <select class="form-select form-select-sm" id="cityFilter" onchange="applyFilters()">
+                    <option value="">All Cities</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Bangalore">Bangalore</option>
+                    <option value="Pune">Pune</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                    <option value="Kolkata">Kolkata</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small">State</label>
+                  <select class="form-select form-select-sm" id="stateFilter" onchange="applyFilters()">
+                    <option value="">All States</option>
+                    <option value="Maharashtra">Maharashtra</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Karnataka">Karnataka</option>
+                    <option value="Tamil Nadu">Tamil Nadu</option>
+                    <option value="Telangana">Telangana</option>
+                    <option value="West Bengal">West Bengal</option>
+                    <option value="Gujarat">Gujarat</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Furnished Filter -->
+          <div class="filter-section mb-4">
+            <h6 class="filter-title" data-bs-toggle="collapse" data-bs-target="#furnishedFilter" aria-expanded="true">
+              <i class="bi bi-house-gear me-2"></i>Furnishing
+              <i class="bi bi-chevron-down float-end"></i>
+            </h6>
+            <div class="collapse show" id="furnishedFilter">
+              <div class="filter-options">
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="furnished" id="furnished-yes" onchange="applyFilters()">
+                  <label class="form-check-label" for="furnished-yes">Furnished</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input filter-checkbox" type="checkbox" value="unfurnished" id="furnished-no" onchange="applyFilters()">
+                  <label class="form-check-label" for="furnished-no">Unfurnished</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      
+      <!-- Enhanced Properties Grid -->
+      <div class="col-lg-9">
+        <div class="properties-grid-enhanced" id="propertiesGrid">
+      {% for property in properties %}
+          <div class="property-card-enhanced" 
+               data-type="{{ property.type }}"
+            data-price="{{ property.price }}"
+            data-bedrooms="{{ property.bedrooms }}"
+            data-bathrooms="{{ property.bathrooms }}"
+               data-city="{{ property.city }}"
+               data-state="{{ property.state }}"
+               data-furnished="{{ property.furnished|yesno:'furnished,unfurnished' }}"
+            data-views="{{ property.views }}"
+               data-created="{{ property.created_at|date:'Y-m-d' }}">
+            
+            <div class="property-card-inner">
+              <!-- Property Image -->
+              <div class="property-image-container">
+             <img src="{% if property.images.all %}{{ property.images.all.0.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
+                     alt="{{ property.title }}" class="property-image">
+                
+                <!-- Property Badges -->
+                <div class="property-badges">
+                  <span class="badge bg-primary">{{ property.type|title }}</span>
+                  <span class="badge bg-success">₹{{ property.price|floatformat:0 }}</span>
+                </div>
+                
+                <!-- Property Actions -->
+                <div class="property-actions">
+                  <button class="btn btn-sm btn-light rounded-circle me-2 wishlist-btn" data-property-id="{{ property.id }}" title="Save to Wishlist" aria-pressed="{% if user.is_authenticated and property.id in saved_ids %}true{% else %}false{% endif %}">
+                    <i class="bi {% if user.is_authenticated and property.id in saved_ids %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Property Content -->
+              <div class="property-content-enhanced">
+                <h5 class="property-title">{{ property.title }}</h5>
+                <p class="property-location">
+                  <i class="bi bi-geo-alt me-1"></i>{{ property.city }}, {{ property.state }}
+                </p>
+                
+                <!-- Property Specifications -->
+                <div class="property-specs">
+                  <div class="spec-item">
+                    <i class="bi bi-bed me-1"></i>
+                    <span>{{ property.bedrooms }} beds</span>
+                  </div>
+                  <div class="spec-item">
+                    <i class="bi bi-droplet me-1"></i>
+                    <span>{{ property.bathrooms }} baths</span>
+                  </div>
+                  <div class="spec-item">
+                    <i class="bi bi-eye me-1"></i>
+                    <span>{{ property.views }} views</span>
+                  </div>
+              </div>
+
+                <!-- Property Footer -->
+                <div class="property-footer">
+                  <div class="property-price-display">
+                    <span class="price-amount">₹{{ property.price|floatformat:0 }}</span>
+                    <span class="price-label">total</span>
+                  </div>
+                  <div class="d-flex align-items-center" style="gap:.5rem;">
+                    
+                  <button class="btn btn-primary btn-sm" 
+                    data-bs-toggle="modal" data-bs-target="#propertyModal"
+                    data-id="{{ property.id }}"
+                    data-title="{{ property.title }}"
+                    data-images='{% for img in property.images.all %}{{ img.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}'
+                    data-price="{{ property.price|floatformat:0 }}"
+                    data-address="{{ property.location }}"
+                    data-city="{{ property.city }}"
+                    data-state="{{ property.state }}"
+                    data-country="{{ property.country }}"
+                    data-bedrooms="{{ property.bedrooms }}"
+                    data-bathrooms="{{ property.bathrooms }}"
+                    data-views="{{ property.views }}"
+                          data-description="{{ property.description }}">
+                    View Details
+                  </button>
+                  </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+        </div>
+        
+        <!-- No Results Message -->
+        <div id="noResults" class="text-center py-5" style="display: none;">
+          <i class="bi bi-search text-muted" style="font-size: 3rem;"></i>
+          <h5 class="text-muted mt-3">No properties found</h5>
+          <p class="text-muted">Try adjusting your filters to see more results.</p>
+          <button class="btn btn-primary" onclick="clearAllFilters()">Clear All Filters</button>
+        </div>
+      </div>
+    </div>
+    <div class="row align-items-center py-5">
+      <div class="col-lg-3">Pagination ({{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }})</div>
+      <div class="col-lg-9">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-end">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+            {% else %}
+            <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+            {% endif %}
+            
+            {% for i in paginator.page_range %}
+              {% if page_obj.number == i %}
+              <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+              {% else %}
+              <li class="page-item"><a class="page-link" href="?page={{ i }}">{{ i }}</a></li>
+              {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
+            {% else %}
+            <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="propertyModal" tabindex="-1" aria-labelledby="propertyModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0">
+        <h5 class="modal-title" id="modal-title">Property Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body pt-0">
+        
+        <div id="propertyCarousel" class="carousel slide mb-3" data-bs-ride="carousel" data-bs-interval="5000">
+          <div class="carousel-inner rounded" id="modal-images">
+            </div>
+          <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+            <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+            <span class="visually-hidden">Next</span>
+          </button>
+        </div>
+
+        <div id="modal-thumbnails" class="d-flex justify-content-start flex-wrap mb-4" style="gap: 1rem;">
+          </div>
+
+        <div class="modal-details-section p-4 rounded bg-light mb-4">
+          <h6 class="text-primary mb-3">Property Information</h6>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <p class="mb-1"><strong>Price:</strong> <span class="d-block" id="modal-price"></span></p>
+              <p class="mb-1"><strong>Views:</strong> <span class="d-block" id="modal-views"></span></p>
+              <p class="mb-1"><strong>Address:</strong> <span class="d-block" id="modal-address"></span></p>
+              <p class="mb-1">
+                <strong>Contact:</strong>
+                <span class="d-block " >
+                  <a href="#" id="modal-msg-btn" class="btn btn-sm btn-outline-success mt-2">Send a Message</a>
+                  <a href="" id="modal-property-btn" class="btn btn-sm btn-outline-primary mt-2 ms-2" target="_blank">
+                    <i class="bi bi-house-door me-1"></i>View Property Page
+                  </a>
+                </span>
+              </p>
+             
+            </div>
+            <div class="col-md-6">
+              <p class="mb-1"><strong>City:</strong> <span class="d-block" id="modal-city"></span></p>
+              <p class="mb-1"><strong>State:</strong> <span class="d-block" id="modal-state"></span></p>
+              <p class="mb-1"><strong>Country:</strong> <span class="d-block" id="modal-country"></span></p>
+              <p class="mb-1">
+                <strong>Specs:</strong>
+                <span class="d-flex align-items-center mt-1">
+                  <span class="icon-bed me-2"></span><span id="modal-bedrooms"></span> &nbsp;beds
+                  <span class="icon-bath me-2 ms-3"></span><span id="modal-bathrooms"></span> &nbsp;baths
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-description-section p-4 rounded border">
+          <h6 class="text-primary mb-3">Description</h6>
+          <p id="modal-description" class="text-black-50"></p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<style>
+  /* Hero Section Enhancements */
+  .search-hero-container {
+    margin-top: 2rem;
+  }
+  
+  .search-bar-wrapper {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .search-suggestions .badge {
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .search-suggestions .badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Properties Header Card */
+  .properties-header-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+  }
+
+  /* Enhanced Filter Sidebar */
+  .filter-sidebar-enhanced {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 2rem;
+  }
+
+  .filter-header-enhanced {
+    border-bottom: 2px solid #f8f9fa;
+    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .filter-header-enhanced h5 {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .filter-section {
+    border: 1px solid #f1f3f4;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .filter-title {
+    background: #f8f9fa;
+    padding: 0.75rem 1rem;
+    margin: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #495057;
+  }
+
+  .filter-title:hover {
+    background: #e9ecef;
+    color: var(--bs-primary);
+  }
+
+  .filter-title i.bi-chevron-down {
+    transition: transform 0.3s ease;
+  }
+
+  .filter-title[aria-expanded="false"] i.bi-chevron-down {
+    transform: rotate(-90deg);
+  }
+
+  .filter-options {
+    padding: 1rem;
+  }
+
+  .filter-options .form-check {
+    margin-bottom: 0.75rem;
+  }
+
+  .filter-options .form-check-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+
+  .filter-options .form-check-input:checked + .form-check-label {
+    color: var(--bs-primary);
+    font-weight: 600;
+  }
+
+  .price-ranges .btn {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+    margin: 0.2rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+
+  .price-ranges .btn:hover {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  /* Enhanced Properties Grid */
+  .properties-grid-enhanced {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .property-card-enhanced {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .property-card-enhanced.hidden {
+    opacity: 0;
+    transform: scale(0.9);
+    pointer-events: none;
+  }
+
+  .property-card-enhanced:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .property-card-inner {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .property-image-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+  }
+
+  .property-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .property-card-enhanced:hover .property-image {
+    transform: scale(1.05);
+  }
+
+  .property-badges {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    right: 1rem;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .property-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .property-card-enhanced:hover .property-actions {
+    opacity: 1;
+  }
+
+  .property-actions .btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .property-content-enhanced {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .property-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .property-location {
+    color: #6c757d;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .property-specs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .spec-item {
+    display: flex;
+    align-items: center;
+    color: #6c757d;
+    font-size: 0.85rem;
+  }
+
+  .property-footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .property-price-display {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .price-amount {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2c3e50;
+  }
+
+  .price-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+  }
+
+  /* Modal Styling */
+  body.modal-open {
+  overflow: hidden !important;
+  position: relative;
+  height: 100vh;
+}
+
+  #propertyModal .modal-content {
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+  #propertyModal .modal-header {
+    padding: 1.5rem 2rem 0;
+  }
+  #propertyModal .modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  #propertyModal .modal-body {
+    padding: 1rem 2rem 2rem;
+  }
+  #propertyModal .carousel-item img {
+    height: 400px;
+    object-fit: cover;
+  }
+  #propertyModal .modal-details-section,
+  #propertyModal .modal-description-section {
+    padding: 1.5rem;
+  }
+  .modal-details-section .d-block {
+    font-weight: 400;
+  }
+
+  .thumbnail-image {
+    width: 100px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    opacity: 0.8;
+  }
+  .thumbnail-image:hover,
+  .thumbnail-image.active {
+    opacity: 1;
+    border-color: var(--bs-primary);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1200px) {
+    .properties-grid-enhanced {
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    }
+  }
+
+  @media (max-width: 991px) {
+    .filter-sidebar-enhanced {
+      position: static;
+      margin-bottom: 2rem;
+    }
+    
+    .properties-header-card {
+      padding: 1rem;
+    }
+    
+    .sort-controls {
+      margin-top: 1rem;
+    }
+    
+    .properties-grid-enhanced {
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .search-bar-wrapper {
+      padding: 0.75rem;
+    }
+    
+    .search-suggestions {
+      text-align: center;
+    }
+    
+    .filter-sidebar-enhanced {
+      padding: 1rem;
+    }
+    
+    .properties-grid-enhanced {
+      grid-template-columns: 1fr;
+    }
+    
+    .property-image-container {
+      height: 180px;
+    }
+    
+    .price-ranges .btn {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+    }
+  }
+
+  /* Loading Animation */
+  .filter-loading {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .filter-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--bs-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+
+
+<script>
+// Hero Search Functionality
+function performHeroSearch() {
+    const searchInput = document.getElementById('heroSearch');
+    if (!searchInput) {
+        console.error('Hero search input not found');
+        return;
+    }
+    
+    const searchTerm = searchInput.value.trim();
+    console.log('Search term:', searchTerm);
+    
+    if (searchTerm) {
+        // Try to match with cities first
+        const cities = ['Mumbai', 'Delhi', 'Bangalore', 'Pune', 'Chennai', 'Hyderabad', 'Kolkata'];
+        const matchedCity = cities.find(city => 
+            city.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        
+        if (matchedCity) {
+            console.log('Matched city:', matchedCity);
+            // Clear all filters first
+            clearAllFilters();
+            // Set city filter
+            const cityFilter = document.getElementById('cityFilter');
+            if (cityFilter) {
+                cityFilter.value = matchedCity;
+                applyFilters();
+            }
+        } else {
+            console.log('No city match, searching in properties');
+            // Search in property titles and descriptions
+            searchInProperties(searchTerm);
+        }
+        
+        // Scroll to results
+        const propertiesSection = document.querySelector('.section-properties');
+        if (propertiesSection) {
+            propertiesSection.scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+    }
+}
+
+function searchByLocation(location) {
+    // Clear all existing filters first
+    clearAllFilters();
+    
+    const cityFilter = document.getElementById('cityFilter');
+    cityFilter.value = location;
+    applyFilters();
+    document.querySelector('.section-properties').scrollIntoView({ 
+        behavior: 'smooth' 
+    });
+}
+
+function searchInProperties(searchTerm) {
+    console.log('Searching in properties for:', searchTerm);
+    // Filter properties by title, city, or state
+    filteredProperties = allProperties.filter(property => {
+        const titleElement = property.element.querySelector('.property-title');
+        if (!titleElement) {
+            console.log('No title element found for property');
+            return false;
+        }
+        
+        const title = titleElement.textContent.toLowerCase();
+        const city = property.city.toLowerCase();
+        const state = property.state.toLowerCase();
+        const searchLower = searchTerm.toLowerCase();
+        
+        const matches = title.includes(searchLower) || 
+                       city.includes(searchLower) || 
+                       state.includes(searchLower);
+        
+        console.log('Property:', title, 'City:', city, 'State:', state, 'Matches:', matches);
+        return matches;
+    });
+    
+    console.log('Filtered properties count:', filteredProperties.length);
+    updatePropertyDisplay();
+    updatePropertyCount();
+}
+
+// Filter functionality
+let allProperties = [];
+let filteredProperties = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Store all properties data
+    const propertyCards = document.querySelectorAll('.property-card-enhanced');
+    allProperties = Array.from(propertyCards).map(card => ({
+        element: card,
+        type: card.dataset.type,
+        price: parseFloat(card.dataset.price),
+        bedrooms: parseInt(card.dataset.bedrooms),
+        bathrooms: parseInt(card.dataset.bathrooms),
+        city: card.dataset.city,
+        state: card.dataset.state,
+        furnished: card.dataset.furnished,
+        views: parseInt(card.dataset.views),
+        created: card.dataset.created
+    }));
+    
+    filteredProperties = [...allProperties];
+    
+    // Initialize filters from URL parameters
+    initializeFiltersFromURL();
+    
+    // Set up collapse functionality
+    setupCollapseHandlers();
+    
+    // Add enter key support for hero search
+    document.getElementById('heroSearch').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            performHeroSearch();
+        }
+    });
+
+    // Wishlist toggle handlers
+    document.querySelectorAll('.wishlist-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const propertyId = this.getAttribute('data-property-id');
+            const icon = this.querySelector('i');
+            try {
+                const resp = await fetch('{% url "wishlist_toggle" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': (document.cookie.split(';').find(c=>c.trim().startsWith('csrftoken='))||'').split('=')[1] || ''
+                    },
+                    body: JSON.stringify({ property_id: propertyId })
+                });
+                if (resp.status === 302) { window.location.reload(); return; }
+                const data = await resp.json();
+                if (!data.success) { console.warn(data.error); return; }
+                if (data.saved) {
+                    icon.classList.remove('bi-heart');
+                    icon.classList.add('bi-heart-fill','text-danger');
+                    this.setAttribute('aria-pressed','true');
+                } else {
+                    icon.classList.remove('bi-heart-fill','text-danger');
+                    icon.classList.add('bi-heart');
+                    this.setAttribute('aria-pressed','false');
+                }
+            } catch(err) {
+                console.error(err);
+            }
+        });
+    });
+});
+
+function setupCollapseHandlers() {
+    const collapseElements = document.querySelectorAll('[data-bs-toggle="collapse"]');
+    collapseElements.forEach(element => {
+        element.addEventListener('click', function() {
+            const chevron = this.querySelector('.bi-chevron-down');
+            if (chevron) {
+                setTimeout(() => {
+                    const isExpanded = this.getAttribute('aria-expanded') === 'true';
+                    chevron.style.transform = isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)';
+                }, 50);
+            }
+        });
+    });
+}
+
+function initializeFiltersFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Property type filters
+    const types = urlParams.getAll('type');
+    types.forEach(type => {
+        const checkbox = document.getElementById(`type-${type}`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Price range
+    const minPrice = urlParams.get('min_price');
+    const maxPrice = urlParams.get('max_price');
+    if (minPrice) document.getElementById('minPrice').value = minPrice;
+    if (maxPrice) document.getElementById('maxPrice').value = maxPrice;
+    
+    // Bedrooms
+    const bedrooms = urlParams.getAll('bedrooms');
+    bedrooms.forEach(bed => {
+        const checkbox = document.getElementById(`bed-${bed}`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Bathrooms
+    const bathrooms = urlParams.getAll('bathrooms');
+    bathrooms.forEach(bath => {
+        const checkbox = document.getElementById(`bath-${bath}`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Location
+    const city = urlParams.get('city');
+    const state = urlParams.get('state');
+    if (city) document.getElementById('cityFilter').value = city;
+    if (state) document.getElementById('stateFilter').value = state;
+    
+    // Furnished
+    const furnished = urlParams.getAll('furnished');
+    furnished.forEach(furnish => {
+        const checkbox = document.getElementById(`furnished-${furnish}`);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    // Sort
+    const sort = urlParams.get('sort');
+    if (sort) document.getElementById('sortBy').value = sort;
+    
+    // Apply filters
+    applyFilters();
+}
+
+function applyFilters() {
+    const filters = getActiveFilters();
+    
+    // Filter properties
+    filteredProperties = allProperties.filter(property => {
+        return matchesFilters(property, filters);
+    });
+    
+    // Sort properties
+    sortProperties(filteredProperties);
+    
+    // Update display
+    updatePropertyDisplay();
+    
+    // Update URL
+    updateURL(filters);
+    
+    // Update count
+    updatePropertyCount();
+}
+
+function applySorting() {
+    console.log('applySorting called');
+    const filters = getActiveFilters();
+    // Recompute filtered set to ensure consistency, then sort
+    filteredProperties = allProperties.filter(property => matchesFilters(property, filters));
+    sortProperties(filteredProperties);
+    updatePropertyDisplay();
+    updateURL(filters);
+    updatePropertyCount();
+}
+
+function getActiveFilters() {
+    const filters = {
+        types: [],
+        minPrice: null,
+        maxPrice: null,
+        bedrooms: [],
+        bathrooms: [],
+        city: '',
+        state: '',
+        furnished: [],
+        sort: document.getElementById('sortBy').value
+    };
+    
+    // Property types
+    document.querySelectorAll('input[id^="type-"]:checked').forEach(checkbox => {
+        filters.types.push(checkbox.value);
+    });
+    
+    // Price range
+    const minPrice = document.getElementById('minPrice').value;
+    const maxPrice = document.getElementById('maxPrice').value;
+    if (minPrice) filters.minPrice = parseFloat(minPrice);
+    if (maxPrice) filters.maxPrice = parseFloat(maxPrice);
+    
+    // Bedrooms
+    document.querySelectorAll('input[id^="bed-"]:checked').forEach(checkbox => {
+        filters.bedrooms.push(parseInt(checkbox.value));
+    });
+    
+    // Bathrooms
+    document.querySelectorAll('input[id^="bath-"]:checked').forEach(checkbox => {
+        filters.bathrooms.push(parseInt(checkbox.value));
+    });
+    
+    // Location
+    filters.city = document.getElementById('cityFilter').value;
+    filters.state = document.getElementById('stateFilter').value;
+    
+    // Furnished
+    document.querySelectorAll('input[id^="furnished-"]:checked').forEach(checkbox => {
+        filters.furnished.push(checkbox.value);
+    });
+    
+    // Sort
+    filters.sort = document.getElementById('sortBy').value;
+    
+    return filters;
+}
+
+function matchesFilters(property, filters) {
+    // Property type filter
+    if (filters.types.length > 0 && !filters.types.includes(property.type)) {
+        return false;
+    }
+    
+    // Price range filter
+    if (filters.minPrice !== null && property.price < filters.minPrice) {
+        return false;
+    }
+    if (filters.maxPrice !== null && property.price > filters.maxPrice) {
+        return false;
+    }
+    
+    // Bedrooms filter
+    if (filters.bedrooms.length > 0) {
+        const bedMatch = filters.bedrooms.some(bed => {
+            if (bed === 4) {
+                return property.bedrooms >= 4;
+            }
+            return property.bedrooms === bed;
+        });
+        if (!bedMatch) return false;
+    }
+    
+    // Bathrooms filter
+    if (filters.bathrooms.length > 0) {
+        const bathMatch = filters.bathrooms.some(bath => {
+            if (bath === 3) {
+                return property.bathrooms >= 3;
+            }
+            return property.bathrooms === bath;
+        });
+        if (!bathMatch) return false;
+    }
+    
+    // City filter
+    if (filters.city && property.city !== filters.city) {
+        return false;
+    }
+    
+    // State filter
+    if (filters.state && property.state !== filters.state) {
+        return false;
+    }
+    
+    // Furnished filter
+    if (filters.furnished.length > 0 && !filters.furnished.includes(property.furnished)) {
+        return false;
+    }
+    
+    return true;
+}
+
+function sortProperties(properties) {
+    const sortBy = document.getElementById('sortBy').value;
+    console.log('sortProperties called with sortBy:', sortBy);
+    console.log('Properties to sort:', properties.length);
+    
+    properties.sort((a, b) => {
+        switch (sortBy) {
+            case 'newest':
+                return new Date(b.created) - new Date(a.created);
+            case 'oldest':
+                return new Date(a.created) - new Date(b.created);
+            case 'price-low':
+                return a.price - b.price;
+            case 'price-high':
+                return b.price - a.price;
+            case 'views':
+                return b.views - a.views;
+            default:
+                return 0;
+        }
+    });
+    
+    console.log('After sorting, first property price:', properties[0]?.price);
+}
+
+function updatePropertyDisplay() {
+    const propertiesGrid = document.getElementById('propertiesGrid');
+    const noResults = document.getElementById('noResults');
+
+    // If no results, show message and clear grid
+    if (filteredProperties.length === 0) {
+        noResults.style.display = 'block';
+        propertiesGrid.innerHTML = '';
+        return;
+    }
+
+    noResults.style.display = 'none';
+
+    // Rebuild the grid in the exact sorted order
+    const fragment = document.createDocumentFragment();
+    filteredProperties.forEach((property, index) => {
+        property.element.style.display = 'block';
+        property.element.classList.remove('hidden');
+        property.element.classList.add('visible');
+        fragment.appendChild(property.element);
+    });
+
+    // Replace children in one go to avoid flicker
+    propertiesGrid.innerHTML = '';
+    propertiesGrid.appendChild(fragment);
+}
+
+function updatePropertyCount() {
+    const countElement = document.getElementById('propertiesCount');
+    countElement.textContent = filteredProperties.length;
+}
+
+function updateURL(filters) {
+    const url = new URL(window.location);
+    url.search = ''; // Clear existing params
+    
+    // Add active filters to URL
+    if (filters.types.length > 0) {
+        filters.types.forEach(type => url.searchParams.append('type', type));
+    }
+    
+    if (filters.minPrice !== null) {
+        url.searchParams.set('min_price', filters.minPrice);
+    }
+    
+    if (filters.maxPrice !== null) {
+        url.searchParams.set('max_price', filters.maxPrice);
+    }
+    
+    if (filters.bedrooms.length > 0) {
+        filters.bedrooms.forEach(bed => url.searchParams.append('bedrooms', bed));
+    }
+    
+    if (filters.bathrooms.length > 0) {
+        filters.bathrooms.forEach(bath => url.searchParams.append('bathrooms', bath));
+    }
+    
+    if (filters.city) {
+        url.searchParams.set('city', filters.city);
+    }
+    
+    if (filters.state) {
+        url.searchParams.set('state', filters.state);
+    }
+    
+    if (filters.furnished.length > 0) {
+        filters.furnished.forEach(furnish => url.searchParams.append('furnished', furnish));
+    }
+    
+    if (filters.sort !== 'newest') {
+        url.searchParams.set('sort', filters.sort);
+    }
+    
+    // Update URL without page reload
+    window.history.replaceState({}, '', url);
+}
+
+function setPriceRange(min, max) {
+    document.getElementById('minPrice').value = min === 0 ? '' : min;
+    document.getElementById('maxPrice').value = max === 999999999 ? '' : max;
+    applyFilters();
+}
+
+function clearAllFilters() {
+    // Clear all checkboxes
+    document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // Clear price inputs
+    document.getElementById('minPrice').value = '';
+    document.getElementById('maxPrice').value = '';
+    
+    // Clear location selects
+    document.getElementById('cityFilter').value = '';
+    document.getElementById('stateFilter').value = '';
+    
+    // Reset sort
+    document.getElementById('sortBy').value = 'newest';
+    
+    // Reset filtered properties to show all
+    filteredProperties = [...allProperties];
+    
+    // Update display
+    updatePropertyDisplay();
+    updatePropertyCount();
+    
+    // Clear URL parameters
+    window.history.replaceState({}, '', window.location.pathname);
+}
+
+// Existing modal functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const propertyLinks = document.querySelectorAll('a[data-bs-target="#propertyModal"]');
+
+    propertyLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            const propertyId = this.getAttribute('data-id');
+
+            // AJAX request to increment views
+            fetch(`/property/${propertyId}/increment-view/`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Updated views:', data.views);
+            })
+            .catch(err => console.error(err));
+        });
+    });
+});
+
+const propertyModal = document.getElementById('propertyModal');
+  propertyModal.addEventListener('shown.bs.modal', function () {
+  document.body.classList.add('modal-open');
+  document.body.style.overflow = 'hidden';
+});
+
+propertyModal.addEventListener('hidden.bs.modal', function () {
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = '';
+});
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var propertyModal = document.getElementById('propertyModal');
+    propertyModal.addEventListener('show.bs.modal', function (event) {
+      var button = event.relatedTarget;
+
+      var propertyId = button.getAttribute('data-id');
+      var title = button.getAttribute('data-title');
+      var images = button.getAttribute('data-images').split(',');
+      var price = button.getAttribute('data-price');
+      var address = button.getAttribute('data-address');
+      var city = button.getAttribute('data-city');
+      var state = button.getAttribute('data-state');
+      var country = button.getAttribute('data-country');
+      var bedrooms = button.getAttribute('data-bedrooms');
+      var bathrooms = button.getAttribute('data-bathrooms');
+      var description = button.getAttribute('data-description');
+      var views = button.getAttribute('data-views');
+
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-price').textContent = ' ₹ ' + price;
+      document.getElementById('modal-address').textContent = address;
+      document.getElementById('modal-city').textContent = city;
+      document.getElementById('modal-state').textContent = state;
+      document.getElementById('modal-bedrooms').textContent = bedrooms;
+      document.getElementById('modal-bathrooms').textContent = bathrooms;
+      document.getElementById('modal-description').textContent = description;
+      document.getElementById('modal-country').textContent = country;
+      document.getElementById('modal-views').textContent = views + ' views';
+      
+      // Set the property page link
+      document.getElementById('modal-property-btn').href = '/property/' + propertyId + '/';
+
+      // Populate main carousel
+      var carouselInner = document.getElementById('modal-images');
+      carouselInner.innerHTML = '';
+      images.forEach(function(imgUrl, index) {
+        var div = document.createElement('div');
+        div.className = 'carousel-item' + (index === 0 ? ' active' : '');
+        div.innerHTML = `<img src="${imgUrl}" class="d-block w-100 rounded" alt="Property image">`;
+        carouselInner.appendChild(div);
+      });
+
+      // Populate thumbnail gallery
+      var thumbnailContainer = document.getElementById('modal-thumbnails');
+      thumbnailContainer.innerHTML = '';
+      images.forEach(function(imgUrl, index) {
+        var img = document.createElement('img');
+        img.src = imgUrl;
+        img.className = 'thumbnail-image';
+        img.alt = `Thumbnail ${index + 1}`;
+        img.setAttribute('data-bs-target', '#propertyCarousel');
+        img.setAttribute('data-bs-slide-to', index);
+        if (index === 0) {
+          img.classList.add('active');
+        }
+        thumbnailContainer.appendChild(img);
+      });
+      
+      // Handle active class for thumbnails
+      propertyModal.addEventListener('slide.bs.carousel', function (e) {
+        var activeThumb = thumbnailContainer.querySelector('.thumbnail-image.active');
+        if (activeThumb) {
+          activeThumb.classList.remove('active');
+        }
+        thumbnailContainer.querySelectorAll('.thumbnail-image')[e.to].classList.add('active');
+      });
+
+    });
+  });
+</script>
+{% endblock %}

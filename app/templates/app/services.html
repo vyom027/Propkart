@@ -1,0 +1,91 @@
+{% extends 'app/base.html' %}
+{% load static %}
+
+{% block title %}Services{% endblock %}
+
+{% block content %}
+<div class="hero page-inner overlay" style="background-image: url('{% static "images/hero_bg_1.jpg" %}')">
+  <div class="container">
+    <div class="row justify-content-center align-items-center">
+      <div class="col-lg-9 text-center mt-5">
+        <h1 class="heading" data-aos="fade-up">Services</h1>
+
+        <nav aria-label="breadcrumb" data-aos="fade-up" data-aos-delay="200">
+          <ol class="breadcrumb text-center justify-content-center">
+            <li class="breadcrumb-item"><a href="{% url 'index' %}">Home</a></li>
+            <li class="breadcrumb-item active text-white-50" aria-current="page">Services</li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section bg-light">
+  <div class="container">
+    <div class="row">
+      {% for service in services %}
+      <div class="col-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="box-feature mb-4">
+          <span class="flaticon-{{ service.icon }} mb-4 d-block"></span>
+          <h3 class="text-black mb-3 font-weight-bold">{{ service.title }}</h3>
+          <p class="text-black-50">{{ service.description }}</p>
+          <p><a href="#" class="learn-more">Read more</a></p>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="alert alert-light border text-center">
+          Services are being updated. Please check back soon.
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="section sec-testimonials">
+  <div class="container">
+    <div class="row mb-5 align-items-center">
+      <div class="col-md-6">
+        <h2 class="font-weight-bold heading text-primary mb-4 mb-md-0">Customer Says</h2>
+      </div>
+      <div class="col-md-6 text-md-end">
+        <div id="testimonial-nav">
+          <span class="prev" data-controls="prev">Prev</span>
+          <span class="next" data-controls="next">Next</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-lg-4"></div>
+    </div>
+    <div class="testimonial-slider-wrap">
+      <div class="testimonial-slider">
+        {% for testimonial in testimonials %}
+        <div class="item">
+          <div class="testimonial">
+            <img src="{{ testimonial.image.url }}" alt="Image" class="img-fluid rounded-circle w-25 mb-4" />
+            <div class="rate">
+              {% for i in "12345"|make_list %}
+                {% if forloop.counter <= testimonial.rating %}
+                <span class="icon-star text-warning"></span>
+                {% else %}
+                <span class="icon-star"></span>
+                {% endif %}
+              {% endfor %}
+            </div>
+            <h3 class="h5 text-primary mb-4">{{ testimonial.name }}</h3>
+            <blockquote>
+              <p>&ldquo;{{ testimonial.testimonial }}&rdquo;</p>
+            </blockquote>
+            <p class="text-black-50">{{ testimonial.position }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+  <ul class="object-tools">
+    <li>
+      <a href="{% url 'admin:app_property_changelist' %}?is_verified__exact=0">
+        {% trans "Review unverified properties" %}
+      </a>
+    </li>
+  </ul>
+
+  {{ block.super }}
+{% endblock %}
+
+
