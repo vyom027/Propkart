@@ -58,7 +58,7 @@
         </div>
       </div>
       <div class="col-lg-8" data-aos="fade-up" data-aos-delay="200">
-        <form action="" method="post">
+        <form action="{% url 'contactUs' %}" method="post">
           {% csrf_token %}
           <div class="row">
             <div class="col-6 mb-3">

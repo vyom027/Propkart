@@ -101,6 +101,9 @@
 
             <div class="d-grid gap-2">
               <a class="btn btn-primary" href="#enquire">Enquire Now</a>
+              <a class="btn btn-outline-primary" href="{% url 'property_brochure_pdf' property.id %}">
+                <i class="bi bi-file-earmark-pdf me-1"></i> Download Brochure (PDF)
+              </a>
               <a class="btn btn-outline-secondary" href="{% url 'property_list' %}">Back to Properties</a>
             </div>
           </div>

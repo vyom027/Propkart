@@ -24,6 +24,7 @@ urlpatterns = [
     path('property/<int:property_id>/', views.property_detail, name='property_detail'),
     path('property/<int:property_id>/increment-view/', views.increment_property_view, name='increment_property_view'),
     path('property/<int:property_id>/message/', views.property_message, name='property_message'),
+    path('property/<int:property_id>/brochure.pdf', views.property_brochure_pdf, name='property_brochure_pdf'),
     
 
     path('seller',views.become_seller_request, name='become_seller'),

@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} - Property Brochure</title>
+  <style>
+    @page { 
+      size: A4; 
+      margin: 0;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      /* PropKart Brand Colors */
+      --primary: #00204a;
+      --primary-light: #003366;
+      --secondary: #005555;
+      --accent: #f0b429;
+      --success: #14a66a;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      
+      /* Neutral Palette */
+      --white: #ffffff;
+      --gray-50: #f8fafc;
+      --gray-100: #f1f5f9;
+      --gray-200: #e2e8f0;
+      --gray-300: #cbd5e1;
+      --gray-400: #94a3b8;
+      --gray-500: #64748b;
+      --gray-600: #475569;
+      --gray-700: #334155;
+      --gray-800: #1e293b;
+      --gray-900: #0f172a;
+      
+      /* Typography */
+      --font-primary: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+      
+      /* Spacing Scale */
+      --space-1: 0.25rem;
+      --space-2: 0.5rem;
+      --space-3: 0.75rem;
+      --space-4: 1rem;
+      --space-5: 1.25rem;
+      --space-6: 1.5rem;
+      --space-8: 2rem;
+      --space-10: 2.5rem;
+      --space-12: 3rem;
+      --space-16: 4rem;
+      --space-20: 5rem;
+      
+      /* Border Radius */
+      --radius-sm: 0.375rem;
+      --radius-md: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+      --radius-2xl: 1.5rem;
+      --radius-full: 9999px;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 32, 74, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 32, 74, 0.1), 0 2px 4px -1px rgba(0, 32, 74, 0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 32, 74, 0.1), 0 4px 6px -2px rgba(0, 32, 74, 0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 32, 74, 0.1), 0 10px 10px -5px rgba(0, 32, 74, 0.04);
+      --shadow-2xl: 0 25px 50px -12px rgba(0, 32, 74, 0.25);
+    }
+    
+    body {
+      font-family: var(--font-primary);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--gray-800);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Layout Container */
+    .brochure {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--gray-50) 0%, var(--white) 100%);
+      position: relative;
+    }
+    
+    /* Header Section */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 50%, var(--secondary) 100%);
+      color: var(--white);
+      padding: var(--space-8) var(--space-12);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      transform: translate(50%, -50%);
+    }
+    
+    .header-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .brand {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    
+    .badge {
+      background: rgba(255, 255, 255, 0.2);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    /* Hero Section */
+    .hero {
+      padding: var(--space-12) var(--space-12) var(--space-8);
+      background: var(--white);
+      position: relative;
+    }
+    
+    .hero-content {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--space-8);
+      align-items: start;
+    }
+    
+    .hero-main {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+    
+    .property-title {
+      font-size: 36px;
+      font-weight: 900;
+      color: var(--gray-900);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      margin-bottom: var(--space-2);
+    }
+    
+    .property-address {
+      font-size: 18px;
+      color: var(--gray-600);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    
+    .address-icon {
+      width: 16px;
+      height: 16px;
+      opacity: 0.7;
+    }
+    
+    .price-section {
+      background: linear-gradient(135deg, var(--accent) 0%, #f59e0b 100%);
+      color: var(--white);
+      padding: var(--space-6);
+      border-radius: var(--radius-xl);
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .price-section::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(180deg); }
+    }
+    
+    .price-label {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      opacity: 0.9;
+      margin-bottom: var(--space-1);
+    }
+    
+    .price-value {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+    
+    .hero-image {
+      width: 100%;
+      height: 300px;
+      object-fit: cover;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
+      margin-top: var(--space-6);
+    }
+    
+    /* Specifications Grid */
+    .specs-section {
+      padding: var(--space-8) var(--space-12);
+      background: var(--white);
+    }
+    
+    .section-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: var(--space-8);
+      position: relative;
+      padding-left: var(--space-4);
+    }
+    
+    .section-title::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: var(--radius-sm);
+    }
+    
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-8);
+    }
+    
+    .spec-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      text-align: center;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .spec-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .spec-card:hover::before {
+      transform: scaleX(1);
+    }
+    
+    .spec-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--primary);
+    }
+    
+    .spec-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto var(--space-3);
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-size: 16px;
+      font-weight: 600;
+    }
+    
+    .spec-label {
+      font-size: 12px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: var(--space-2);
+    }
+    
+    .spec-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+    
+    /* Content Section */
+    .content-section {
+      padding: var(--space-8) var(--space-12);
+      background: var(--gray-50);
+    }
+    
+    .content-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--space-8);
+    }
+    
+    .content-card {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      padding: var(--space-8);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--gray-200);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-6);
+      padding-bottom: var(--space-4);
+      border-bottom: 2px solid var(--gray-100);
+    }
+    
+    .card-icon {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .card-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+    
+    .description {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--gray-700);
+    }
+    
+    .info-list {
+      list-style: none;
+    }
+    
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-3) 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .info-item:last-child {
+      border-bottom: none;
+    }
+    
+    .info-label {
+      font-size: 14px;
+      color: var(--gray-600);
+      font-weight: 500;
+    }
+    
+    .info-value {
+      font-size: 14px;
+      color: var(--gray-900);
+      font-weight: 700;
+    }
+    
+    .seller-card {
+      background: linear-gradient(135deg, var(--white) 0%, var(--gray-50) 100%);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: var(--space-6);
+      margin-top: var(--space-4);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .seller-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      margin-bottom: var(--space-4);
+    }
+    
+    .seller-avatar {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--white);
+      font-weight: 700;
+      font-size: 16px;
+    }
+    
+    .seller-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    
+    /* Gallery Section */
+    .gallery-section {
+      padding: var(--space-8) var(--space-12);
+      background: var(--white);
+    }
+    
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--space-4);
+    }
+    
+    .gallery-item {
+      position: relative;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+    }
+    
+    .gallery-item:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .gallery-item img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .gallery-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0, 32, 74, 0.8));
+      color: var(--white);
+      padding: var(--space-4);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    /* Footer */
+    .footer {
+      background: var(--gray-900);
+      color: var(--white);
+      padding: var(--space-8) var(--space-12);
+      text-align: center;
+    }
+    
+    .footer-brand {
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: var(--space-2);
+    }
+    
+    .footer-text {
+      font-size: 14px;
+      color: var(--gray-400);
+    }
+    
+    .footer-divider {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      margin: var(--space-4) auto;
+      border-radius: var(--radius-sm);
+    }
+    
+    /* Print Optimizations */
+    @media print {
+      .brochure {
+        background: var(--white);
+      }
+      
+      .specs-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+      
+      .content-grid {
+        grid-template-columns: 1.5fr 1fr;
+      }
+      
+      .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .hero-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .spec-card:hover,
+      .gallery-item:hover {
+        transform: none;
+      }
+    }
+    
+    /* Utility Classes */
+    .text-center { text-align: center; }
+    .text-right { text-align: right; }
+    .mb-4 { margin-bottom: var(--space-4); }
+    .mb-6 { margin-bottom: var(--space-6); }
+    .mb-8 { margin-bottom: var(--space-8); }
+  </style>
+</head>
+<body>
+  <div class="brochure">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <div class="brand">{{ brand_name }}</div>
+        <div class="badge">Property Brochure</div>
+      </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero">
+      <div class="hero-content">
+        <div class="hero-main">
+          <h1 class="property-title">{{ title }}</h1>
+          <div class="property-address">
+            <svg class="address-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            {{ address }}
+          </div>
+        </div>
+        
+        <div class="price-section">
+          <div class="price-label">Asking Price</div>
+          <div class="price-value">{{ price }}</div>
+        </div>
+      </div>
+      
+      {% if hero_url %}
+      <img src="{{ hero_url }}" alt="Property Hero Image" class="hero-image">
+      {% endif %}
+    </div>
+
+    <!-- Specifications -->
+    <div class="specs-section">
+      <h2 class="section-title">Property Specifications</h2>
+      <div class="specs-grid">
+        <div class="spec-card">
+          <div class="spec-icon">🏠</div>
+          <div class="spec-label">Property Type</div>
+          <div class="spec-value">{{ type }}</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-icon">🛏️</div>
+          <div class="spec-label">Bedrooms</div>
+          <div class="spec-value">{{ bedrooms|default:'—' }}</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-icon">🚿</div>
+          <div class="spec-label">Bathrooms</div>
+          <div class="spec-value">{{ bathrooms|default:'—' }}</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-icon">🚪</div>
+          <div class="spec-label">Total Rooms</div>
+          <div class="spec-value">{{ rooms|default:'—' }}</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-icon">📏</div>
+          <div class="spec-label">Dimensions</div>
+          <div class="spec-value">{{ dimensions }}</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-icon">🪑</div>
+          <div class="spec-label">Furnished</div>
+          <div class="spec-value">{{ furnished }}</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-icon">👁️</div>
+          <div class="spec-label">Views</div>
+          <div class="spec-value">{{ views }}</div>
+        </div>
+        <div class="spec-card">
+          <div class="spec-icon">📅</div>
+          <div class="spec-label">Listed On</div>
+          <div class="spec-value">{{ listed_on }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Section -->
+    <div class="content-section">
+      <div class="content-grid">
+        <div class="content-card">
+          <div class="card-header">
+            <div class="card-icon">📝</div>
+            <h3 class="card-title">Property Overview</h3>
+          </div>
+          <p class="description">{{ description }}</p>
+        </div>
+        
+        <div>
+          <div class="content-card">
+            <div class="card-header">
+              <div class="card-icon">ℹ️</div>
+              <h4 class="card-title">Key Information</h4>
+            </div>
+            <ul class="info-list">
+              <li class="info-item">
+                <span class="info-label">Type</span>
+                <span class="info-value">{{ type }}</span>
+              </li>
+              <li class="info-item">
+                <span class="info-label">Location</span>
+                <span class="info-value">{{ address }}</span>
+              </li>
+              <li class="info-item">
+                <span class="info-label">Dimensions</span>
+                <span class="info-value">{{ dimensions }}</span>
+              </li>
+              <li class="info-item">
+                <span class="info-label">Furnished</span>
+                <span class="info-value">{{ furnished }}</span>
+              </li>
+              <li class="info-item">
+                <span class="info-label">Listed On</span>
+                <span class="info-value">{{ listed_on }}</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="seller-card">
+            <div class="seller-header">
+              <div class="seller-avatar">{{ seller_name|first|upper }}</div>
+              <div>
+                <h4 class="seller-name">{{ seller_name }}</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery -->
+    {% if gallery %}
+    <div class="gallery-section">
+      <h2 class="section-title">Property Gallery</h2>
+      <div class="gallery-grid">
+        {% for url in gallery %}
+        <div class="gallery-item">
+          <img src="{{ url }}" alt="Property Photo {{ forloop.counter }}">
+          <div class="gallery-overlay">Photo {{ forloop.counter }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-brand">{{ brand_name }}</div>
+      <div class="footer-divider"></div>
+      <div class="footer-text">Professional Property Marketing</div>
+    </div>
+  </div>
+</body>
+</html>

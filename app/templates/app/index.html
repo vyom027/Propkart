@@ -6,22 +6,25 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/aos.css' %}" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tiny-slider/2.9.4/tiny-slider.css">
+<link rel="stylesheet" href="{% static 'css/index-enhancements.css' %}">
+<link rel="stylesheet" href="{% static 'css/dynamic-styles.css' %}">
+<script src="{% static 'js/main.js' %}" defer></script>
 {% endblock %}
 
 {% block content %}
 <div class="hero">
   <div class="hero-slide">
-    <div class="img overlay" style="background-image: url('{% static "images/hero_bg_1.jpg" %}');"></div>
-    <div class="img overlay" style="background-image: url('{% static "images/hero_bg_2.jpg" %}');"></div>
-    <div class="img overlay" style="background-image: url('{% static "images/hero_bg_3.jpg" %}');"></div>
+    <div class="img overlay hero-bg" data-bg="{% static 'images/hero_bg_1.jpg' %}"></div>
+    <div class="img overlay hero-bg" data-bg="{% static 'images/hero_bg_2.jpg' %}"></div>
+    <div class="img overlay hero-bg" data-bg="{% static 'images/hero_bg_3.jpg' %}"></div>
   </div>
 
   <div class="container">
     <div class="row justify-content-center align-items-center">
       <div class="col-lg-9 text-center">
         <h1 class="heading" data-aos="fade-up">Easiest way to find your dream home</h1>
-        <form action="#" class="narrow-w form-search d-flex align-items-stretch mb-3" data-aos="fade-up" data-aos-delay="200">
-          <input type="text" class="form-control px-4" placeholder="Your ZIP code or City. e.g. New York" />
+        <form action="{% url 'property_list' %}" method="get" class="narrow-w form-search d-flex align-items-stretch mb-3" data-aos="fade-up" data-aos-delay="200">
+          <input type="text" name="q" class="form-control px-4" placeholder="Search by city, state or address" aria-label="Search properties" />
           <button type="submit" class="btn btn-primary">Search</button>
         </form>
       </div>
@@ -45,10 +48,10 @@
           <div class="property-slider">
             {% for property in context.latest_properties %}
               <div class="property-item mb-4 col-md-4">
-                <a href="#" class="img d-block mb-3" data-bs-toggle="modal" data-bs-target="#propertyModal"
+                <a href="#" class="img d-block mb-3 property-thumbnail-container" data-bs-toggle="modal" data-bs-target="#propertyModal"
                   data-id="{{ property.id }}"
                   data-title="{{ property.title }}"
-                  data-images='{% for img in property.images.all %}{{ img.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}'
+                  data-images='[{% for img in property.images.all %}"{{ img.image.url }}"{% if not forloop.last %}, {% endif %}{% endfor %}]'
                   data-price="{{ property.price|floatformat:0 }}"
                   data-address="{{ property.location }}"
                   data-city="{{ property.city }}"
@@ -58,8 +61,8 @@
                   data-bathrooms="{{ property.bathrooms }}"
                   data-views="{{ property.views }}"
                   data-description="{{ property.description }}">
-                  <img src="{% if property.images.all %}{{ property.images.all.0.image.url }}{% else %}{% static 'images/no-image.png' %}{% endif %}"
-                    alt="Image for {{ property.title }}" class="img-fluid rounded property-thumbnail" />
+                  <img src="{% if property.images.all %}{{ property.images.all.0.image.url }}{% else %}{% static 'images/img_1.jpg' %}{% endif %}" 
+                    alt="{{ property.title }} thumbnail" class="img-fluid rounded property-thumbnail" loading="lazy" />
                 </a>
 
                 <div class="property-content">
@@ -84,7 +87,7 @@
                   <a href="#" class="btn btn-primary py-2 px-3" data-bs-toggle="modal" data-bs-target="#propertyModal"
                     data-id="{{ property.id }}"
                     data-title="{{ property.title }}"
-                    data-images='{% for img in property.images.all %}{{ img.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}'
+                    data-images='[{% for img in property.images.all %}"{{ img.image.url }}"{% if not forloop.last %}, {% endif %}{% endfor %}]'
                     data-price="{{ property.price|floatformat:0 }}"
                     data-address="{{ property.location }}"
                     data-city="{{ property.city }}"
@@ -107,6 +110,117 @@
   </div>
 </div>
 
+<!-- Property Categories Section -->
+<div class="section bg-light">
+  <div class="container">
+    <div class="row mb-5 align-items-center">
+      <div class="col-lg-6">
+        <h2 class="font-weight-bold text-primary heading">Property Categories</h2>
+      </div>
+      <div class="col-lg-6 text-lg-end">
+        <p><a href="{% url 'property_list' %}" class="btn btn-primary text-white py-3 px-4">View all categories</a></p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-6 col-md-4 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="category-card rounded overflow-hidden position-relative">
+          <img src="{% static 'images/img_1.jpg' %}" alt="Houses" class="img-fluid category-img">
+          <div class="category-overlay d-flex align-items-center justify-content-center">
+            <div class="text-center">
+              <h3 class="text-white mb-0">Houses</h3>
+              <a href="{% url 'property_list' %}?category=house" class="btn btn-outline-light btn-sm mt-3">View Properties</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="category-card rounded overflow-hidden position-relative">
+          <img src="{% static 'images/img_2.jpg' %}" alt="Apartments" class="img-fluid category-img">
+          <div class="category-overlay d-flex align-items-center justify-content-center">
+            <div class="text-center">
+              <h3 class="text-white mb-0">Apartments</h3>
+              <a href="{% url 'property_list' %}?category=apartment" class="btn btn-outline-light btn-sm mt-3">View Properties</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="category-card rounded overflow-hidden position-relative">
+          <img src="{% static 'images/img_3.jpg' %}" alt="Commercial" class="img-fluid category-img">
+          <div class="category-overlay d-flex align-items-center justify-content-center">
+            <div class="text-center">
+              <h3 class="text-white mb-0">Commercial</h3>
+              <a href="{% url 'property_list' %}?category=commercial" class="btn btn-outline-light btn-sm mt-3">View Properties</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-3 mb-4" data-aos="fade-up" data-aos-delay="400">
+        <div class="category-card rounded overflow-hidden position-relative">
+          <img src="{% static 'images/hero_bg_2.jpg' %}" alt="Plots" class="img-fluid category-img">
+          <div class="category-overlay d-flex align-items-center justify-content-center">
+            <div class="text-center">
+              <h3 class="text-white mb-0">Plots</h3>
+              <a href="{% url 'property_list' %}?category=plot" class="btn btn-outline-light btn-sm mt-3">View Properties</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Top Locations Section -->
+<div class="section">
+  <div class="container">
+    <div class="row mb-5 align-items-center">
+      <div class="col-lg-6">
+        <h2 class="font-weight-bold text-primary heading">Top Locations</h2>
+      </div>
+      <div class="col-lg-6 text-lg-end">
+        <p><a href="{% url 'property_list' %}" class="btn btn-primary text-white py-3 px-4">View all locations</a></p>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-6 col-md-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="location-card rounded overflow-hidden position-relative">
+          <img src="{% static 'images/hero_bg_1.jpg' %}" alt="Mumbai" class="img-fluid location-img">
+          <div class="location-overlay d-flex align-items-end">
+            <div class="p-4 w-100">
+              <h3 class="text-white mb-2">Mumbai</h3>
+              <p class="text-white-50 mb-3"><small>1200+ Properties</small></p>
+              <a href="{% url 'property_list' %}?city=Mumbai" class="btn btn-outline-light btn-sm">View Properties</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="location-card rounded overflow-hidden position-relative">
+          <img src="{% static 'images/hero_bg_2.jpg' %}" alt="Delhi" class="img-fluid location-img">
+          <div class="location-overlay d-flex align-items-end">
+            <div class="p-4 w-100">
+              <h3 class="text-white mb-2">Delhi</h3>
+              <p class="text-white-50 mb-3"><small>950+ Properties</small></p>
+              <a href="{% url 'property_list' %}?city=Delhi" class="btn btn-outline-light btn-sm">View Properties</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 mb-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="location-card rounded overflow-hidden position-relative">
+          <img src="{% static 'images/hero_bg_3.jpg' %}" alt="Bangalore" class="img-fluid location-img">
+          <div class="location-overlay d-flex align-items-end">
+            <div class="p-4 w-100">
+              <h3 class="text-white mb-2">Bangalore</h3>
+              <p class="text-white-50 mb-3"><small>800+ Properties</small></p>
+              <a href="{% url 'property_list' %}?city=Bangalore" class="btn btn-outline-light btn-sm">View Properties</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <section class="features-1">
   <div class="container">
@@ -155,35 +269,30 @@
   </div>
 </section>
 
-<div class="section sec-testimonials">
+<div class="section sec-testimonials bg-light py-5">
   <div class="container">
-    <div class="row mb-5 align-items-center">
-      <div class="col-md-6">
-        <h2 class="font-weight-bold heading text-primary mb-4 mb-md-0">
-          Customer Says
+    <div class="row justify-content-center mb-5">
+      <div class="col-lg-7 text-center">
+        <h2 class="font-weight-bold heading text-primary mb-4">
+          What Our Customers Say
         </h2>
-      </div>
-      <div class="col-md-6 text-md-end">
-        <div id="testimonial-nav">
-          <span class="prev" data-controls="prev">Prev</span>
-
-          <span class="next" data-controls="next">Next</span>
-        </div>
+        <p class="text-black-50">Hear what our satisfied customers have to say about their experience with PropKart</p>
       </div>
     </div>
-
+    
     <div class="row">
-      <div class="col-lg-4">
-        
-      </div>
-    </div>
-    <div class="testimonial-slider-wrap">
-      <div class="testimonial-slider">
+      {% if testimonials %}
         {% for testimonial in testimonials %}
-        <div class="item">
-          <div class="testimonial">
-            <img src="{% static testimonial.image_url %}" alt="Image" class="img-fluid rounded-circle w-25 mb-4" />
-            <div class="rate">
+        <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:"100" }}">
+          <div class="testimonial-card p-4 bg-white rounded shadow-sm h-100">
+            <div class="d-flex align-items-center mb-4">
+              <img src="{% static testimonial.image_url %}" alt="{{ testimonial.name }}" class="img-fluid rounded-circle" style="width: 70px; height: 70px; object-fit: cover;" />
+              <div class="ms-3">
+                <h3 class="h5 text-primary mb-1">{{ testimonial.name }}</h3>
+                <p class="text-black-50 mb-0"><small>{{ testimonial.position }}</small></p>
+              </div>
+            </div>
+            <div class="rate mb-3">
               {% for i in "12345"|make_list %}
                 {% if forloop.counter <= testimonial.rating %}
                   <span class="icon-star text-warning"></span>
@@ -192,14 +301,83 @@
                 {% endif %}
               {% endfor %}
             </div>
-            <h3 class="h5 text-primary mb-4">{{ testimonial.name }}</h3>
-            <blockquote>
+            <blockquote class="mb-0">
               <p>&ldquo;{{ testimonial.testimonial }}&rdquo;</p>
             </blockquote>
-            <p class="text-black-50">{{ testimonial.position }}</p>
           </div>
         </div>
         {% endfor %}
+      {% else %}
+        <!-- Hardcoded testimonials as fallback -->
+        <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+          <div class="testimonial-card p-4 bg-white rounded shadow-sm h-100">
+            <div class="d-flex align-items-center mb-4">
+              <img src="{% static 'images/person_1.jpg' %}" alt="Rahul Sharma" class="img-fluid rounded-circle" style="width: 70px; height: 70px; object-fit: cover;" />
+              <div class="ms-3">
+                <h3 class="h5 text-primary mb-1">Rahul Sharma</h3>
+                <p class="text-black-50 mb-0"><small>Homeowner, Mumbai</small></p>
+              </div>
+            </div>
+            <div class="rate mb-3">
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+            </div>
+            <blockquote class="mb-0">
+              <p>&ldquo;PropKart made finding my dream home incredibly easy. Their search tools helped me narrow down exactly what I wanted, and the virtual tours saved me so much time. Highly recommend!&rdquo;</p>
+            </blockquote>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+          <div class="testimonial-card p-4 bg-white rounded shadow-sm h-100">
+            <div class="d-flex align-items-center mb-4">
+              <img src="{% static 'images/person_2.jpg' %}" alt="Priya Patel" class="img-fluid rounded-circle" style="width: 70px; height: 70px; object-fit: cover;" />
+              <div class="ms-3">
+                <h3 class="h5 text-primary mb-1">Priya Patel</h3>
+                <p class="text-black-50 mb-0"><small>First-time Buyer, Delhi</small></p>
+              </div>
+            </div>
+            <div class="rate mb-3">
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star"></span>
+            </div>
+            <blockquote class="mb-0">
+              <p>&ldquo;As a first-time buyer, I was nervous about the whole process. The PropKart team guided me through every step and helped me find a beautiful apartment within my budget. The experience was seamless!&rdquo;</p>
+            </blockquote>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="300">
+          <div class="testimonial-card p-4 bg-white rounded shadow-sm h-100">
+            <div class="d-flex align-items-center mb-4">
+              <img src="{% static 'images/person_3.jpg' %}" alt="Vikram Singh" class="img-fluid rounded-circle" style="width: 70px; height: 70px; object-fit: cover;" />
+              <div class="ms-3">
+                <h3 class="h5 text-primary mb-1">Vikram Singh</h3>
+                <p class="text-black-50 mb-0"><small>Property Investor, Bangalore</small></p>
+              </div>
+            </div>
+            <div class="rate mb-3">
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+              <span class="icon-star text-warning"></span>
+            </div>
+            <blockquote class="mb-0">
+              <p>&ldquo;I've been investing in properties for years, and PropKart has been the best platform I've used. The detailed property information and market insights have helped me make smart investment decisions.&rdquo;</p>
+            </blockquote>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
       </div>
     </div>
   </div>
@@ -213,15 +391,47 @@
           Let's find home that's perfect for you
         </h2>
         <p class="text-black-50">
-          Tell us what you’re looking for and we’ll surface the best matches—
+          Tell us what you're looking for and we'll surface the best matches—
           price, neighborhood, size and amenities, all in one place.
         </p>
       </div>
     </div>
+    
+    <!-- Advanced Search Features -->
+    <div class="row mb-5">
+      <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="search-feature p-4 bg-white rounded shadow-sm text-center">
+          <div class="feature-icon mb-3">
+            <span class="icon-search display-4 text-primary"></span>
+          </div>
+          <h3 class="h5 text-primary">Smart Filters</h3>
+          <p class="text-black-50">Narrow down your search with intelligent filters for property type, budget, amenities, and more.</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="search-feature p-4 bg-white rounded shadow-sm text-center">
+          <div class="feature-icon mb-3">
+            <span class="icon-map-marker display-4 text-primary"></span>
+          </div>
+          <h3 class="h5 text-primary">Location-Based Search</h3>
+          <p class="text-black-50">Find properties in specific neighborhoods, near schools, hospitals, or other points of interest.</p>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="search-feature p-4 bg-white rounded shadow-sm text-center">
+          <div class="feature-icon mb-3">
+            <span class="icon-bell display-4 text-primary"></span>
+          </div>
+          <h3 class="h5 text-primary">Saved Searches & Alerts</h3>
+          <p class="text-black-50">Save your search criteria and receive notifications when new matching properties become available.</p>
+        </div>
+      </div>
+    </div>
+    
     <div class="row justify-content-between mb-5">
       <div class="col-lg-7 mb-5 mb-lg-0 order-lg-2">
-        <div class="img-about dots">
-          <img src="{% static 'images/hero_bg_3.jpg' %}" alt="Image" class="img-fluid" />
+        <div class="img-about">
+          <img src="{% static 'images/hero_bg_3.jpg' %}" alt="Happy family at new home" class="img-fluid rounded shadow-sm" loading="lazy" />
         </div>
       </div>
       <div class="col-lg-4">
@@ -262,30 +472,179 @@
         </div>
       </div>
     </div>
-    <div class="row section-counter mt-5">
+    <div class="row section-counter mt-5 text-center">
+      <!-- Total Properties -->
       <div class="col-6 col-sm-6 col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="300">
         <div class="counter-wrap mb-5 mb-lg-0">
-          <span class="number"><span class="countup text-primary">3298</span></span>
-          <span class="caption text-black-50"># of Buy Properties</span>
+          <i class="bi bi-house-door-fill text-primary fs-1 mb-3"></i>
+          <div>
+            <span class="number d-block"><span class="countup text-primary">{{ context.total_properties_count }}</span></span>
+            <span class="caption text-black-50">Total Properties</span>
+          </div>
         </div>
       </div>
+    
+      <!-- Verified Properties -->
       <div class="col-6 col-sm-6 col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="400">
         <div class="counter-wrap mb-5 mb-lg-0">
-          <span class="number"><span class="countup text-primary">2181</span></span>
-          <span class="caption text-black-50"># of Sell Properties</span>
+          <i class="bi bi-patch-check-fill text-success fs-1 mb-3"></i>
+          <div>
+            <span class="number d-block"><span class="countup text-primary">{{ context.verified_properties_count }}</span></span>
+            <span class="caption text-black-50">Verified Properties</span>
+          </div>
         </div>
       </div>
+    
+      <!-- Property Views -->
       <div class="col-6 col-sm-6 col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="500">
         <div class="counter-wrap mb-5 mb-lg-0">
-          <span class="number"><span class="countup text-primary">9316</span></span>
-          <span class="caption text-black-50"># of All Properties</span>
+          <i class="bi bi-eye-fill text-info fs-1 mb-3"></i>
+          <div>
+            <span class="number d-block"><span class="countup text-primary">{{ context.total_views }}</span></span>
+            <span class="caption text-black-50">Property Views</span>
+          </div>
         </div>
       </div>
+    
+      <!-- Enquiries -->
       <div class="col-6 col-sm-6 col-md-6 col-lg-3" data-aos="fade-up" data-aos-delay="600">
         <div class="counter-wrap mb-5 mb-lg-0">
-          <span class="number"><span class="countup text-primary">7191</span></span>
-          <span class="caption text-black-50"># of Agents</span>
+          <i class="bi bi-chat-dots-fill text-warning fs-1 mb-3"></i>
+          <div>
+            <span class="number d-block"><span class="countup text-primary">{{ context.total_enquiries }}</span></span>
+            <span class="caption text-black-50">Enquiries</span>
+          </div>
         </div>
+      </div>
+    </div>
+      
+    </div>
+  </div>
+</div>
+
+<!-- Sell Your Property CTA Section -->
+<div class="section">
+  <div class="container">
+    <div class="row justify-content-between align-items-center">
+      <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-up">
+        <h2 class="font-weight-bold text-primary heading mb-4">Want to Sell Your Property?</h2>
+        <p class="mb-4">List your property with PropKart and reach thousands of potential buyers. Our platform offers:</p>
+        <ul class="list-unstyled mb-4">
+          <li class="d-flex align-items-center mb-3">
+            <span class="icon-check2 me-3 text-primary"></span>
+            <span>Professional photography and virtual tours</span>
+          </li>
+          <li class="d-flex align-items-center mb-3">
+            <span class="icon-check2 me-3 text-primary"></span>
+            <span>Targeted marketing to qualified buyers</span>
+          </li>
+          <li class="d-flex align-items-center mb-3">
+            <span class="icon-check2 me-3 text-primary"></span>
+            <span>Dedicated support from listing to closing</span>
+          </li>
+          <li class="d-flex align-items-center mb-3">
+            <span class="icon-check2 me-3 text-primary"></span>
+            <span>Market analysis and competitive pricing</span>
+          </li>
+        </ul>
+        <p><a href="{% url 'become_seller' %}" class="btn btn-primary py-3 px-4">Become a Seller</a></p>
+      </div>
+      <div class="col-lg-5" data-aos="fade-up" data-aos-delay="200">
+        <div class="img-property-slide-wrap">
+          <div class="img-property-slide">
+            <img src="{% static 'images/img_1.jpg' %}" alt="Image" class="img-fluid rounded">
+            <img src="{% static 'images/img_2.jpg' %}" alt="Image" class="img-fluid rounded">
+            <img src="{% static 'images/img_3.jpg' %}" alt="Image" class="img-fluid rounded">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Mobile App Promotion Section -->
+<div class="section bg-light">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-5 me-auto mb-5 mb-lg-0" data-aos="fade-up">
+        <img src="{% static 'images/hero_bg_2.jpg' %}" alt="PropKart Mobile App Coming Soon" class="img-fluid rounded shadow-lg">
+      </div>
+      <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+        <span class="badge bg-primary mb-3">Coming Soon</span>
+        <h2 class="font-weight-bold text-primary heading mb-4">Mobile App in Development</h2>
+        <p class="mb-4">We're working on bringing PropKart to your mobile device. Our upcoming app will offer a seamless experience with exclusive features:</p>
+        <div class="row mb-4">
+          <div class="col-md-6 mb-4">
+            <div class="d-flex feature-h">
+              <span class="wrap-icon me-3">
+                <span class="icon-bell"></span>
+              </span>
+              <div class="feature-text">
+                <h3 class="heading">Instant Notifications</h3>
+                <p class="text-black-50">Get alerts for new properties matching your criteria</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-4">
+            <div class="d-flex feature-h">
+              <span class="wrap-icon me-3">
+                <span class="icon-map"></span>
+              </span>
+              <div class="feature-text">
+                <h3 class="heading">Map Navigation</h3>
+                <p class="text-black-50">Find properties near you with interactive maps</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-4">
+            <div class="d-flex feature-h">
+              <span class="wrap-icon me-3">
+                <span class="icon-camera"></span>
+              </span>
+              <div class="feature-text">
+                <h3 class="heading">Virtual Tours</h3>
+                <p class="text-black-50">Experience 360° property tours from anywhere</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 mb-4">
+            <div class="d-flex feature-h">
+              <span class="wrap-icon me-3">
+                <span class="icon-chat"></span>
+              </span>
+              <div class="feature-text">
+                <h3 class="heading">In-App Chat</h3>
+                <p class="text-black-50">Connect directly with sellers and agents</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info">
+          <strong>Stay Updated!</strong> Be the first to know when our mobile app launches. Available soon on iOS and Android.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Call-to-Action Section -->
+<div class="section bg-primary py-5">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8 text-center text-lg-start">
+        <h2 class="text-white font-weight-bold mb-3">Want to sell your property fast?</h2>
+        <p class="text-white-50 mb-0">Post your property on Propkart today and connect with genuine buyers!</p>
+      </div>
+      <div class="col-lg-4 text-center text-lg-end mt-4 mt-lg-0">
+        {% if user.is_authenticated and user.is_seller %}
+          <a href="{% url 'property_create' %}" class="btn btn-light btn-lg px-4 py-3">List Property Now</a>
+        {% elif user.is_authenticated %}
+          <form method="post" action="{% url 'become_seller' %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-light btn-lg px-4 py-3">Become a Seller</button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}?next={% url 'become_seller' %}" class="btn btn-light btn-lg px-4 py-3">List Property Now</a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -313,7 +672,7 @@
           </button>
         </div>
 
-        <div id="modal-thumbnails" class="d-flex justify-content-start flex-wrap mb-4" style="gap: 1rem;">
+        <div id="modal-thumbnails" class="d-flex justify-content-start flex-wrap mb-4">
           </div>
 
         <div class="modal-details-section p-4 rounded bg-light mb-4">
@@ -360,6 +719,88 @@
 </div>
 
 <style>
+  /* Property thumbnail sizing fix */
+  .property-thumbnail-container {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 66.67%; /* 3:2 aspect ratio */
+    overflow: hidden;
+  }
+  
+  .property-thumbnail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Category cards styling */
+  .category-card {
+    height: 200px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+  
+  .category-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .category-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 32, 74, 0.7);
+    transition: all 0.3s ease;
+  }
+  
+  .category-card:hover .category-overlay {
+    background: rgba(0, 32, 74, 0.85);
+  }
+  
+  /* Location cards styling */
+  .location-card {
+    height: 250px;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+  
+  .location-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  }
+  
+  .location-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .location-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, rgba(0, 32, 74, 0.9), rgba(0, 32, 74, 0.1));
+    transition: all 0.3s ease;
+  }
+  
+  .location-card:hover .location-overlay {
+    background: linear-gradient(to top, rgba(0, 32, 74, 1), rgba(0, 32, 74, 0.3));
+  }
 
   body.modal-open {
   overflow: hidden !important;
@@ -443,143 +884,162 @@
   right: 10px;
 }
 
+/* Spacing for thumbnails */
+#modal-thumbnails {
+  gap: 1rem;
+}
+
+/* Hero backgrounds are applied via JS to avoid template/CSS lint conflicts */
+
 </style>
 
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const propertyLinks = document.querySelectorAll('a[data-bs-target="#propertyModal"]');
+document.addEventListener('DOMContentLoaded', function () {
+  // Apply hero background images from data attributes
+  document.querySelectorAll('.hero-slide .hero-bg').forEach(function(el){
+    var bg = el.getAttribute('data-bg');
+    if (bg) el.style.backgroundImage = `url('${bg}')`;
+  });
 
-    propertyLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            const propertyId = this.getAttribute('data-id');
+  var modalEl = document.getElementById('propertyModal');
 
-            // AJAX request to increment views
-            fetch(`/property/${propertyId}/increment-view/`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Updated views:', data.views);
-            })
-            .catch(err => console.error(err));
-        });
-    });
-});
-  propertyModal.addEventListener('shown.bs.modal', function () {
-  document.body.classList.add('modal-open');
-  document.body.style.overflow = 'hidden';
-});
-
-propertyModal.addEventListener('hidden.bs.modal', function () {
-  document.body.classList.remove('modal-open');
-  document.body.style.overflow = '';
-});
-
-  document.addEventListener('DOMContentLoaded', function () {
-    var propertyModal = document.getElementById('propertyModal');
-    propertyModal.addEventListener('show.bs.modal', function (event) {
-      var button = event.relatedTarget;
-
-      var propertyId = button.getAttribute('data-id');
-      var title = button.getAttribute('data-title');
-      var images = button.getAttribute('data-images').split(',');
-      var price = button.getAttribute('data-price');
-      var address = button.getAttribute('data-address');
-      var city = button.getAttribute('data-city');
-      var state = button.getAttribute('data-state');
-      var country = button.getAttribute('data-country');
-      var bedrooms = button.getAttribute('data-bedrooms');
-      var bathrooms = button.getAttribute('data-bathrooms');
-      var description = button.getAttribute('data-description');
-      var views = button.getAttribute('data-views');
-
-      document.getElementById('modal-title').textContent = title;
-      document.getElementById('modal-price').textContent = ' ₹ ' + price;
-      document.getElementById('modal-address').textContent = address;
-      document.getElementById('modal-city').textContent = city;
-      document.getElementById('modal-state').textContent = state;
-      document.getElementById('modal-bedrooms').textContent = bedrooms;
-      document.getElementById('modal-bathrooms').textContent = bathrooms;
-      document.getElementById('modal-description').textContent = description;
-      document.getElementById('modal-country').textContent = country;
-      document.getElementById('modal-views').textContent = views + ' views';
-      
-      // Set the property page link
-      document.getElementById('modal-property-btn').href = '/property/' + propertyId + '/';
-
-      // Populate main carousel
-      var carouselInner = document.getElementById('modal-images');
-      carouselInner.innerHTML = '';
-      images.forEach(function(imgUrl, index) {
-        var div = document.createElement('div');
-        div.className = 'carousel-item' + (index === 0 ? ' active' : '');
-        div.innerHTML = `<img src="${imgUrl}" class="d-block w-100 rounded" alt="Property image">`;
-        carouselInner.appendChild(div);
-      });
-
-      // Populate thumbnail gallery
-      var thumbnailContainer = document.getElementById('modal-thumbnails');
-      thumbnailContainer.innerHTML = '';
-      images.forEach(function(imgUrl, index) {
-        var img = document.createElement('img');
-        img.src = imgUrl;
-        img.className = 'thumbnail-image';
-        img.alt = `Thumbnail ${index + 1}`;
-        img.setAttribute('data-bs-target', '#propertyCarousel');
-        img.setAttribute('data-bs-slide-to', index);
-        if (index === 0) {
-          img.classList.add('active');
-        }
-        thumbnailContainer.appendChild(img);
-      });
-      
-      // Handle active class for thumbnails
-      propertyModal.addEventListener('slide.bs.carousel', function (e) {
-        var activeThumb = thumbnailContainer.querySelector('.thumbnail-image.active');
-        if (activeThumb) {
-          activeThumb.classList.remove('active');
-        }
-        thumbnailContainer.querySelectorAll('.thumbnail-image')[e.to].classList.add('active');
-      });
-
+  // Increment views on open triggers and reflect in UI
+  const propertyLinks = document.querySelectorAll('a[data-bs-target="#propertyModal"]');
+  propertyLinks.forEach(function (link) {
+    link.addEventListener('click', function () {
+      const propertyId = this.getAttribute('data-id');
+      fetch(`/property/${propertyId}/increment-view/`, {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data || typeof data.views === 'undefined') return;
+        const counter = document.getElementById(`views-${propertyId}`);
+        if (counter) counter.textContent = data.views;
+        const modalViews = document.getElementById('modal-views');
+        if (modalViews && modalEl.classList.contains('show')) modalViews.textContent = data.views + ' views';
+      })
+      .catch(() => {});
     });
   });
 
- document.addEventListener('DOMContentLoaded', function() {
-    var sliderWrap = document.querySelector('.property-slider-wrap');
-    var slider = tns({
-        container: '.property-slider',
-        items: 3,
-        slideBy: 1,
-        mouseDrag: true,
-        nav: false,
-        controls: false,
-        autoplay: false,
-        gutter: 20
+  // Body scroll handling while modal open
+  modalEl.addEventListener('shown.bs.modal', function () {
+    document.body.classList.add('modal-open');
+    document.body.style.overflow = 'hidden';
+  });
+  modalEl.addEventListener('hidden.bs.modal', function () {
+    document.body.classList.remove('modal-open');
+    document.body.style.overflow = '';
+  });
+
+  // Populate modal content when opening
+  modalEl.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    if (!button) return;
+
+    var propertyId = button.getAttribute('data-id');
+    var title = button.getAttribute('data-title') || '';
+    var imagesJson = button.getAttribute('data-images') || '[]';
+    var images = [];
+    try { images = JSON.parse(imagesJson); } catch (e) { images = []; }
+    if (!Array.isArray(images)) images = [];
+    if (images.length === 0) {
+      images = ['{% static "images/img_1.jpg" %}'];
+    }
+    var price = button.getAttribute('data-price') || '';
+    var address = button.getAttribute('data-address') || '';
+    var city = button.getAttribute('data-city') || '';
+    var state = button.getAttribute('data-state') || '';
+    var country = button.getAttribute('data-country') || '';
+    var bedrooms = button.getAttribute('data-bedrooms') || '';
+    var bathrooms = button.getAttribute('data-bathrooms') || '';
+    var description = button.getAttribute('data-description') || '';
+    var views = button.getAttribute('data-views') || '';
+
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-price').textContent = ' ₹ ' + price;
+    document.getElementById('modal-address').textContent = address;
+    document.getElementById('modal-city').textContent = city;
+    document.getElementById('modal-state').textContent = state;
+    document.getElementById('modal-bedrooms').textContent = bedrooms;
+    document.getElementById('modal-bathrooms').textContent = bathrooms;
+    document.getElementById('modal-description').textContent = description;
+    document.getElementById('modal-country').textContent = country;
+    document.getElementById('modal-views').textContent = (views ? views : '0') + ' views';
+    document.getElementById('modal-property-btn').href = '/property/' + propertyId + '/';
+
+    var carouselInner = document.getElementById('modal-images');
+    carouselInner.innerHTML = '';
+    images.forEach(function (imgUrl, index) {
+      var div = document.createElement('div');
+      div.className = 'carousel-item' + (index === 0 ? ' active' : '');
+      div.innerHTML = `<img src="${imgUrl}" class="d-block w-100 rounded" alt="${title} image ${index + 1}" loading="lazy">`;
+      carouselInner.appendChild(div);
     });
 
-    // Create left arrow
+    var thumbnailContainer = document.getElementById('modal-thumbnails');
+    thumbnailContainer.innerHTML = '';
+    images.forEach(function (imgUrl, index) {
+      var img = document.createElement('img');
+      img.src = imgUrl;
+      img.className = 'thumbnail-image';
+      img.alt = `${title} thumbnail ${index + 1}`;
+      img.setAttribute('data-bs-target', '#propertyCarousel');
+      img.setAttribute('data-bs-slide-to', index);
+      if (index === 0) img.classList.add('active');
+      thumbnailContainer.appendChild(img);
+    });
+
+    modalEl.addEventListener('slide.bs.carousel', function (e) {
+      var activeThumb = thumbnailContainer.querySelector('.thumbnail-image.active');
+      if (activeThumb) activeThumb.classList.remove('active');
+      var thumbs = thumbnailContainer.querySelectorAll('.thumbnail-image');
+      if (thumbs[e.to]) thumbs[e.to].classList.add('active');
+    }, { once: true });
+  });
+
+  // Property slider
+  var sliderWrap = document.querySelector('.property-slider-wrap');
+  if (sliderWrap) {
+    var slider = tns({
+      container: '.property-slider',
+      items: 3,
+      slideBy: 1,
+      mouseDrag: true,
+      nav: false,
+      controls: false,
+      autoplay: false,
+      gutter: 20,
+      responsive: {
+        0: { items: 1 },
+        576: { items: 1 },
+        768: { items: 2 },
+        992: { items: 3 }
+      }
+    });
+
     const leftArrow = document.createElement('button');
+    leftArrow.setAttribute('type', 'button');
+    leftArrow.setAttribute('aria-label', 'Previous properties');
     leftArrow.innerHTML = '&#8592;';
     leftArrow.classList.add('property-slider-arrow', 'left');
     sliderWrap.appendChild(leftArrow);
 
-    // Create right arrow
     const rightArrow = document.createElement('button');
+    rightArrow.setAttribute('type', 'button');
+    rightArrow.setAttribute('aria-label', 'Next properties');
     rightArrow.innerHTML = '&#8594;';
     rightArrow.classList.add('property-slider-arrow', 'right');
     sliderWrap.appendChild(rightArrow);
 
-    leftArrow.addEventListener('click', () => slider.goTo('prev'));
-    rightArrow.addEventListener('click', () => slider.goTo('next'));
+    leftArrow.addEventListener('click', function () { slider.goTo('prev'); });
+    rightArrow.addEventListener('click', function () { slider.goTo('next'); });
+  }
 });
-
-
 </script>
 
 

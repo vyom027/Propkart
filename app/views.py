@@ -13,12 +13,13 @@ from django.urls import reverse
 from django.utils.html import strip_tags
 from django.core.files.storage import FileSystemStorage
 from django.core.files import File
-from .models import SellerRequest, Property, PropertyImage, PropertyImportKey, Wishlist,Message, Notification, Enquiry, VisitRequest, PasswordResetToken
+from .models import SellerRequest, Property, PropertyImage, PropertyImportKey, Wishlist,Message, Notification, Enquiry, VisitRequest, PasswordResetToken,Contact
 from django.db.models import Sum, Q, Max, Count
-
+from calendar import month_abbr
 from .chat_service import ChatService
 from .models import ChatSession, ChatMessage
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
 
 def delete_property_images(property_instance):
     """Helper function to delete all images associated with a property"""
@@ -213,9 +214,20 @@ def index(request):
 
     show_otp_modal = request.session.pop('show_otp_modal', False)
     show_signup_modal = request.session.pop('show_signup_modal', False)
+    # Calculate statistics for the counter section
+    total_properties_count = Property.objects.count()
+    verified_properties_count = Property.objects.filter(is_verified=True, is_hidden=False).count()
+    total_views = Property.objects.aggregate(total_views=Sum('views'))['total_views'] or 0
+    total_enquiries = Enquiry.objects.count()
+    property_types_counts = Property.objects.filter(is_verified=True, is_hidden=False).values('type').annotate(count=Count('id'))
 
     context = {
         'latest_properties': latest_properties,
+        'total_properties_count': total_properties_count,
+        'verified_properties_count': verified_properties_count,
+        'total_views': total_views,
+        'total_enquiries': total_enquiries,
+        'property_types_counts': property_types_counts,
     }
 
     return render(request, 'app/index.html', {
@@ -231,10 +243,49 @@ def contact(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         email = request.POST.get('email')
+        subject = request.POST.get('subject')
         message = request.POST.get('message')
-        print(f"Name: {name}, Email: {email}, Message: {message}")
-
-    return render(request,'app/contact.html')
+        
+        # Validate required fields
+        if not all([name, email, subject, message]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('contactUs')
+            
+        # Create contact message
+        contact = Contact.objects.create(
+            name=name,
+            email=email,
+            subject=subject,
+            message=message,
+            status='new'
+        )
+        
+        # Send email notification to admin
+        admin_emails = [admin[1] for admin in settings.ADMINS]
+        if admin_emails:
+            context = {
+                'contact': contact,
+                'admin_url': request.build_absolute_uri(reverse('admin:app_contact_change', args=[contact.id]))
+            }
+            html_message = render_to_string('emails/new_contact_notification.html', context)
+            plain_message = strip_tags(html_message)
+            
+            try:
+                send_mail(
+                    subject=f'New Contact Form Submission: {subject}',
+                    message=plain_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=admin_emails,
+                    html_message=html_message,
+                    fail_silently=True
+                )
+            except Exception as e:
+                print(f'Failed to send admin notification email: {str(e)}')
+        
+        messages.success(request, 'Thank you for your message! We will get back to you soon.')
+        return redirect('contactUs')
+        
+    return render(request, 'app/contact.html')
 
 @modal_login_required
 def profile(request):
@@ -601,9 +652,232 @@ def seller_enquiries(request):
     return render(request, 'app/seller/enquiries.html', context)
 
 def seller_analytics(request):
-    analytics_data = {}  
-    return render(request, 'app/seller/analytics.html', {'analytics_data': analytics_data})
-
+    # Ensure user is a seller
+    if not request.user.is_seller:
+        return redirect('home')
+    
+    seller = request.user
+    
+    # Get current date info
+    now = timezone.now()
+    current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    current_week_start = now - timedelta(days=now.weekday())
+    
+    # === STATS OVERVIEW ===
+    
+    # 1. Total Properties
+    total_properties = Property.objects.filter(seller=seller).count()
+    
+    # 2. New Properties This Month
+    new_properties = Property.objects.filter(
+        seller=seller,
+        created_at__gte=current_month_start
+    ).count()
+    
+    # 3. Total Views
+    total_views = Property.objects.filter(seller=seller).aggregate(
+        total=Sum('views')
+    )['total'] or 0
+    
+    # 4. Views Growth (current month vs previous month)
+    previous_month_start = (current_month_start - timedelta(days=1)).replace(day=1)
+    
+    current_month_properties = Property.objects.filter(
+        seller=seller,
+        created_at__gte=current_month_start
+    )
+    current_month_views = current_month_properties.aggregate(total=Sum('views'))['total'] or 0
+    
+    previous_month_properties = Property.objects.filter(
+        seller=seller,
+        created_at__gte=previous_month_start,
+        created_at__lt=current_month_start
+    )
+    previous_month_views = previous_month_properties.aggregate(total=Sum('views'))['total'] or 1
+    
+    if previous_month_views > 0:
+        views_growth = round(((current_month_views - previous_month_views) / previous_month_views) * 100, 1)
+    else:
+        views_growth = 0
+    
+    # 5. Visit Requests (total)
+    visit_requests = VisitRequest.objects.filter(
+        property__seller=seller
+    ).count()
+    
+    # 6. Visit Requests Growth (this week vs last week)
+    last_week_start = current_week_start - timedelta(days=7)
+    
+    current_week_visits = VisitRequest.objects.filter(
+        property__seller=seller,
+        created_at__gte=current_week_start
+    ).count()
+    
+    last_week_visits = VisitRequest.objects.filter(
+        property__seller=seller,
+        created_at__gte=last_week_start,
+        created_at__lt=current_week_start
+    ).count()
+    
+    if last_week_visits > 0:
+        visit_requests_growth = round(((current_week_visits - last_week_visits) / last_week_visits) * 100, 1)
+    else:
+        visit_requests_growth = 0
+    
+    # 7. Total Enquiries
+    total_enquiries = Enquiry.objects.filter(
+        property__seller=seller
+    ).count()
+    
+    # 8. New Enquiries (this month)
+    new_enquiries = Enquiry.objects.filter(
+        property__seller=seller,
+        created_at__gte=current_month_start
+    ).count()
+    
+    # === CHART DATA ===
+    
+    # Generate last 6 months
+    months = []
+    month_labels = []
+    for i in range(5, -1, -1):
+        month_date = now - timedelta(days=30 * i)
+        month_start = month_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        months.append(month_start)
+        month_labels.append(month_abbr[month_start.month])
+    
+    # 9. Enquiries Trend Data (Line Chart)
+    enquiry_new = []
+    enquiry_replied = []
+    enquiry_closed = []
+    
+    for month_start in months:
+        # Calculate next month
+        if month_start.month == 12:
+            next_month = month_start.replace(year=month_start.year + 1, month=1)
+        else:
+            next_month = month_start.replace(month=month_start.month + 1)
+        
+        new_count = Enquiry.objects.filter(
+            property__seller=seller,
+            status='new',
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        
+        replied_count = Enquiry.objects.filter(
+            property__seller=seller,
+            status='replied',
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        
+        closed_count = Enquiry.objects.filter(
+            property__seller=seller,
+            status='closed',
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        
+        enquiry_new.append(new_count)
+        enquiry_replied.append(replied_count)
+        enquiry_closed.append(closed_count)
+    
+    # 10. Property Distribution by Type (Doughnut Chart)
+    property_distribution = Property.objects.filter(seller=seller).values('type').annotate(
+        count=Count('id')
+    ).order_by('-count')
+    
+    property_types = []
+    property_counts = []
+    
+    for item in property_distribution:
+        # Get readable name from TYPE_CHOICES
+        type_display = dict(Property.TYPE_CHOICES).get(item['type'], item['type'].title())
+        property_types.append(type_display)
+        property_counts.append(item['count'])
+    
+    # 11. Visit Requests by Status (Bar Chart)
+    visit_pending = []
+    visit_approved = []
+    visit_completed = []
+    visit_cancelled = []
+    
+    for month_start in months:
+        # Calculate next month
+        if month_start.month == 12:
+            next_month = month_start.replace(year=month_start.year + 1, month=1)
+        else:
+            next_month = month_start.replace(month=month_start.month + 1)
+        
+        pending = VisitRequest.objects.filter(
+            property__seller=seller,
+            status='pending',
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        
+        approved = VisitRequest.objects.filter(
+            property__seller=seller,
+            status='approved',
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        
+        completed = VisitRequest.objects.filter(
+            property__seller=seller,
+            status='completed',
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        
+        cancelled = VisitRequest.objects.filter(
+            property__seller=seller,
+            status='cancelled',
+            created_at__gte=month_start,
+            created_at__lt=next_month
+        ).count()
+        
+        visit_pending.append(pending)
+        visit_approved.append(approved)
+        visit_completed.append(completed)
+        visit_cancelled.append(cancelled)
+    
+    # Build context
+    context = {
+        # Stats Overview
+        'total_properties': total_properties,
+        'new_properties': new_properties,
+        'total_views': total_views,
+        'views_growth': views_growth,
+        'visit_requests': visit_requests,
+        'visit_requests_growth': visit_requests_growth,
+        'total_enquiries': total_enquiries,
+        'new_enquiries': new_enquiries,
+        
+        # Enquiries Trend Chart
+        'enquiry_months': json.dumps(month_labels),
+        'enquiry_data': {
+            'new': enquiry_new,
+            'replied': enquiry_replied,
+            'closed': enquiry_closed,
+        },
+        
+        # Property Distribution Chart
+        'property_types': json.dumps(property_types),
+        'property_counts': property_counts,
+        
+        # Visit Requests Chart
+        'visit_months': json.dumps(month_labels),
+        'visit_data': {
+            'pending': visit_pending,
+            'approved': visit_approved,
+            'completed': visit_completed,
+            'cancelled': visit_cancelled,
+        },
+    }
+    
+    return render(request, 'app/seller/analytics.html', context)
 def seller_support(request):
     support_info = {
         'email': 'Hl9kX@example.com',
@@ -933,6 +1207,226 @@ def property_detail(request, property_id):
     }
     return render(request, 'app/property-single.html', context)
 
+@require_http_methods(["GET"])
+def property_brochure_pdf(request, property_id):
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors
+    from reportlab.lib.utils import ImageReader
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.platypus import Paragraph
+    from reportlab.lib.enums import TA_LEFT, TA_CENTER
+
+    prop = get_object_or_404(Property.objects.select_related('seller').filter(is_verified=True, is_hidden=False), id=property_id)
+    
+    def _safe_image(path):
+        """Load image safely, return None if fails"""
+        try:
+            if not path or not os.path.exists(path):
+                return None
+            return ImageReader(path)
+        except Exception:
+            return None
+    
+    def _scale_to_fit(img_w, img_h, max_w, max_h):
+        """Scale image to fit within bounds"""
+        if img_w <= 0 or img_h <= 0:
+            return max_w, max_h
+        ratio = min(max_w / float(img_w), max_h / float(img_h))
+        return img_w * ratio, img_h * ratio
+    
+    def _format_price(value):
+        try:
+            return f"₹{float(value):,.0f}"
+        except Exception:
+            return str(value)
+    
+    def _draw_header(c, width, height, title, price, address):
+        """Draw header with title, price, address"""
+        c.setFont('Helvetica-Bold', 16)
+        c.setFillColor(colors.HexColor('#0d6efd'))
+        c.drawString(40, height - 40, 'PropKart')
+        
+        c.setFont('Helvetica-Bold', 20)
+        c.setFillColor(colors.black)
+        c.drawString(40, height - 70, title[:50])
+        
+        c.setFont('Helvetica-Bold', 18)
+        c.setFillColor(colors.HexColor('#0d6efd'))
+        c.drawRightString(width - 40, height - 70, price)
+        
+        c.setFont('Helvetica', 11)
+        c.setFillColor(colors.grey)
+        c.drawString(40, height - 90, address[:80])
+        
+        return height - 110
+    
+    def _draw_specs(c, x, y, specs):
+        """Draw specs grid"""
+        col_w = 120
+        row_h = 35
+        for i, (label, value) in enumerate(specs):
+            col_x = x + (i % 4) * col_w
+            row_y = y - (i // 4) * row_h
+            
+            # Draw spec box
+            c.setStrokeColor(colors.lightgrey)
+            c.setFillColor(colors.white)
+            c.rect(col_x, row_y - 25, col_w - 5, 25, fill=1, stroke=1)
+            
+            # Label
+            c.setFont('Helvetica', 9)
+            c.setFillColor(colors.grey)
+            c.drawString(col_x + 3, row_y - 12, label)
+            
+            # Value
+            c.setFont('Helvetica-Bold', 12)
+            c.setFillColor(colors.black)
+            c.drawString(col_x + 3, row_y - 22, str(value)[:15])
+        
+        rows = (len(specs) + 3) // 4
+        return y - rows * row_h - 10
+    
+    def _draw_paragraph(c, x, y, text, width, font_size=11):
+        """Draw wrapped text"""
+        style = ParagraphStyle(
+            name='Body', fontName='Helvetica', fontSize=font_size,
+            textColor=colors.black, alignment=TA_LEFT, leading=font_size + 2
+        )
+        p = Paragraph(text.replace('\n', '<br/>'), style)
+        w, h = p.wrapOn(c, width, 400)
+        p.drawOn(c, x, y - h)
+        return y - h - 8
+    
+    def _draw_gallery(c, images, width, height, start_y):
+        """Draw image gallery"""
+        if not images:
+            return start_y
+        
+        x_margin = 40
+        gap = 8
+        cell_w = (width - x_margin * 2 - gap * 2) / 3.0
+        cell_h = cell_w * 0.75
+        
+        x = x_margin
+        y = start_y
+        
+        for idx, img_path in enumerate(images[:9]):  # Limit to 9 images
+            if y - cell_h < 60:
+                c.showPage()
+                c.setPageCompression(1)  # Enable compression
+                x = x_margin
+                y = height - 60
+            
+            img = _safe_image(img_path)
+            if img:
+                try:
+                    iw, ih = img.getSize()
+                    draw_w, draw_h = _scale_to_fit(iw, ih, cell_w, cell_h)
+                    offset_x = x + (cell_w - draw_w) / 2.0
+                    offset_y = y - draw_h
+                    c.drawImage(img, offset_x, offset_y, width=draw_w, height=draw_h, preserveAspectRatio=True)
+                except Exception:
+                    pass
+            
+            x += cell_w + gap
+            if (idx + 1) % 3 == 0:
+                x = x_margin
+                y -= cell_h + gap
+        
+        return y
+    
+    # Get property images
+    images = []
+    for img in PropertyImage.objects.filter(property=prop):
+        try:
+            if img.image and hasattr(img.image, 'path') and os.path.exists(img.image.path):
+                images.append(img.image.path)
+        except Exception:
+            continue
+    
+    # Generate PDF
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="propkart_{property_id}_brochure.pdf"'
+    
+    c = canvas.Canvas(response, pagesize=A4)
+    c.setPageCompression(1)  # Enable compression for faster generation
+    width, height = A4
+    
+    # Header
+    price_text = _format_price(prop.price)
+    address_text = f"{prop.location}, {prop.city}, {prop.state}"
+    y = _draw_header(c, width, height, prop.title, price_text, address_text)
+    
+    # Hero image
+    if images:
+        hero_img = _safe_image(images[0])
+        if hero_img:
+            try:
+                iw, ih = hero_img.getSize()
+                max_w = width - 80
+                max_h = 200
+                draw_w, draw_h = _scale_to_fit(iw, ih, max_w, max_h)
+                x = (width - draw_w) / 2.0
+                y_hero = y - draw_h - 10
+                c.drawImage(hero_img, x, y_hero, width=draw_w, height=draw_h, preserveAspectRatio=True)
+                y = y_hero - 20
+            except Exception:
+                pass
+    
+    # Specs
+    specs = [
+        ("Type", str(prop.type).title()),
+        ("Bedrooms", prop.bedrooms or '—'),
+        ("Bathrooms", prop.bathrooms or '—'),
+        ("Rooms", prop.rooms or '—'),
+        ("Dimensions", f"{prop.length or '—'} × {prop.width or '—'} ft"),
+        ("Furnished", "Yes" if prop.furnished else "No"),
+        ("Views", prop.views),
+        ("Listed", prop.created_at.strftime('%b %d, %Y') if getattr(prop, 'created_at', None) else '—'),
+    ]
+    y = _draw_specs(c, 40, y, specs)
+    
+    # Description
+    c.setFont('Helvetica-Bold', 14)
+    c.setFillColor(colors.black)
+    c.drawString(40, y, 'Property Overview')
+    y -= 20
+    
+    desc = prop.description or 'No description provided.'
+    y = _draw_paragraph(c, 40, y, desc, width - 80)
+    
+    # Seller info
+    c.setFont('Helvetica-Bold', 14)
+    c.drawString(40, y, 'Seller Information')
+    y -= 20
+    
+    seller_name = f"{getattr(prop.seller, 'first_name', '')} {getattr(prop.seller, 'last_name', '')}".strip() or 'Seller'
+    y = _draw_paragraph(c, 40, y, seller_name, width - 80)
+    
+    # Gallery
+    if images:
+        if y < 120:
+            c.showPage()
+            c.setPageCompression(1)
+            y = height - 60
+        
+        c.setFont('Helvetica-Bold', 14)
+        c.drawString(40, y, 'Gallery')
+        y -= 20
+        
+        y = _draw_gallery(c, images, width, height, y)
+    
+    # Footer
+    c.setFont('Helvetica', 8)
+    c.setFillColor(colors.grey)
+    c.drawRightString(width - 40, 30, 'PropKart Property Brochure')
+    
+    c.showPage()
+    c.save()
+    
+    return response
 @modal_login_required
 def property_message(request, property_id):
     if request.method != 'POST':

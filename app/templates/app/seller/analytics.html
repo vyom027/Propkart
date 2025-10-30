@@ -34,29 +34,29 @@
     <div class="col-md-3 col-6">
       <div class="card shadow-sm border-0 text-center p-3">
         <h6 class="fw-semibold text-muted">Total Properties</h6>
-        <h2 class="text-primary fw-bold">12</h2>
-        <small class="text-success">+2 this month</small>
+        <h2 class="text-primary fw-bold">{{ total_properties }}</h2>
+        <small class="text-success">{{ new_properties }} new this month</small>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card shadow-sm border-0 text-center p-3">
+        <h6 class="fw-semibold text-muted">Total Views</h6>
+        <h2 class="text-success fw-bold">{{ total_views }}</h2>
+        <small class="text-success">{{ views_growth }}% growth</small>
+      </div>
+    </div>
+    <div class="col-md-3 col-6">
+      <div class="card shadow-sm border-0 text-center p-3">
+        <h6 class="fw-semibold text-muted">Visit Requests</h6>
+        <h2 class="text-warning fw-bold">{{ visit_requests }}</h2>
+        <small class="{% if visit_requests_growth >= 0 %}text-success{% else %}text-danger{% endif %}">{{ visit_requests_growth }}% this week</small>
       </div>
     </div>
     <div class="col-md-3 col-6">
       <div class="card shadow-sm border-0 text-center p-3">
         <h6 class="fw-semibold text-muted">Enquiries</h6>
-        <h2 class="text-success fw-bold">48</h2>
-        <small class="text-success">+15% growth</small>
-      </div>
-    </div>
-    <div class="col-md-3 col-6">
-      <div class="card shadow-sm border-0 text-center p-3">
-        <h6 class="fw-semibold text-muted">Visits</h6>
-        <h2 class="text-warning fw-bold">3.2k</h2>
-        <small class="text-danger">-5% this week</small>
-      </div>
-    </div>
-    <div class="col-md-3 col-6">
-      <div class="card shadow-sm border-0 text-center p-3">
-        <h6 class="fw-semibold text-muted">Conversions</h6>
-        <h2 class="text-danger fw-bold">18</h2>
-        <small class="text-success">+3 closed deals</small>
+        <h2 class="text-danger fw-bold">{{ total_enquiries }}</h2>
+        <small class="text-success">{{ new_enquiries }} new enquiries</small>
       </div>
     </div>
   </div>
@@ -108,12 +108,30 @@
   new Chart(document.getElementById('enquiriesChart'), {
     type: 'line',
     data: {
-      labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'],
+      labels: {{ enquiry_months|safe }},
       datasets: [{
-        label: 'Enquiries',
-        data: [12, 19, 8, 25, 30, 22, 40, 48],
+        label: 'New',
+        data: {{ enquiry_data.new }},
         borderColor: '#0d6efd',
         backgroundColor: 'rgba(13, 110, 253, 0.2)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3
+      },
+      {
+        label: 'Replied',
+        data: {{ enquiry_data.replied }},
+        borderColor: '#198754',
+        backgroundColor: 'rgba(25, 135, 84, 0.2)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3
+      },
+      {
+        label: 'Closed',
+        data: {{ enquiry_data.closed }},
+        borderColor: '#dc3545',
+        backgroundColor: 'rgba(220, 53, 69, 0.2)',
         borderWidth: 2,
         fill: true,
         tension: 0.3
@@ -122,7 +140,12 @@
     options: { 
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } }
+      plugins: { 
+        legend: { 
+          display: true,
+          position: 'top'
+        }
+      }
     }
   });
 
@@ -130,35 +153,68 @@
   new Chart(document.getElementById('propertyChart'), {
     type: 'doughnut',
     data: {
-      labels: ['Apartments', 'Villas', 'Offices', 'Plots'],
+      labels: {{ property_types|safe }},
       datasets: [{
-        data: [5, 3, 2, 2],
-        backgroundColor: ['#0d6efd','#198754','#ffc107','#dc3545']
+        data: {{ property_counts }},
+        backgroundColor: ['#0d6efd','#198754','#ffc107','#dc3545','#6610f2']
       }]
     },
     options: { 
       responsive: true, 
       maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } }
+      plugins: { 
+        legend: { 
+          position: 'bottom',
+          labels: {
+            padding: 20
+          }
+        }
+      }
     }
   });
 
-  // Visitors Insights
+  // Visit Request Status
   new Chart(document.getElementById('visitorsChart'), {
     type: 'bar',
     data: {
-      labels: ['Week 1','Week 2','Week 3','Week 4'],
+      labels: {{ visit_months|safe }},
       datasets: [{
-        label: 'Visitors',
-        data: [800, 1200, 950, 1300],
-        backgroundColor: '#20c997'
+        label: 'Pending',
+        data: {{ visit_data.pending }},
+        backgroundColor: '#ffc107'
+      },
+      {
+        label: 'Approved',
+        data: {{ visit_data.approved }},
+        backgroundColor: '#198754'
+      },
+      {
+        label: 'Completed',
+        data: {{ visit_data.completed }},
+        backgroundColor: '#0d6efd'
+      },
+      {
+        label: 'Cancelled',
+        data: {{ visit_data.cancelled }},
+        backgroundColor: '#dc3545'
       }]
     },
     options: { 
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
+      plugins: { 
+        legend: { 
+          display: true,
+          position: 'top'
+        }
+      },
+      scales: { 
+        x: { stacked: true },
+        y: { 
+          stacked: true,
+          beginAtZero: true 
+        }
+      }
     }
   });
 </script>
