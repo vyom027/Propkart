@@ -176,7 +176,7 @@ Available properties:
 Instructions:
 1. Answer questions about properties using ONLY the information provided above
 2. If you don't have information about something, say "I don't have that information"
-3. Always mention Property IDs when referencing specific properties
+3. Always mention Property Names when referencing specific properties
 4. Be helpful and friendly
 5. Suggest viewing properties if they match the user's needs
 6. If no properties match, suggest different search criteria
@@ -184,29 +184,16 @@ Instructions:
 Current conversation context: You are helping a buyer find their ideal property."""
 
         try:
-            if self.use_gemini:
-                # Gemini expects a single prompt string; combine system + messages
-                prompt_parts = [system_prompt]
-                for m in conversation_history:
-                    prefix = 'User' if m["role"] == 'user' else 'Assistant'
-                    prompt_parts.append(f"{prefix}: {m['content']}")
-                full_prompt = "\n".join(prompt_parts)
-                gemini_resp = self.gemini_model.generate_content(full_prompt)
-                ai_response = getattr(gemini_resp, 'text', None) or (
-                    gemini_resp.candidates[0].content.parts[0].text if getattr(gemini_resp, 'candidates', None) else ""
-                )
-            else:
-                # OpenAI Chat Completions
-                response = self.openai_client.chat.completions.create(
-                    model="gpt-3.5-turbo",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        *conversation_history
-                    ],
-                    max_tokens=500,
-                    temperature=0.7
-                )
-                ai_response = response.choices[0].message.content
+            # Gemini expects a single prompt string; combine system + messages
+            prompt_parts = [system_prompt]
+            for m in conversation_history:
+                prefix = 'User' if m["role"] == 'user' else 'Assistant'
+                prompt_parts.append(f"{prefix}: {m['content']}")
+            full_prompt = "\n".join(prompt_parts)
+            gemini_resp = self.gemini_model.generate_content(full_prompt)
+            ai_response = getattr(gemini_resp, 'text', None) or (
+                gemini_resp.candidates[0].content.parts[0].text if getattr(gemini_resp, 'candidates', None) else ""
+            )
             
             # Extract property IDs from response (simple extraction)
             referenced_property_ids = []

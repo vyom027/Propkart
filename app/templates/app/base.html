@@ -1,4 +1,6 @@
 {% load static %}
+{% load price_format %}
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -26,8 +28,56 @@
     {% block extra_css %}{% endblock %}
     
     <style>
+      /* Mobile menu button styles */
+      .site-mobile-menu .btn {
+        width: 100%;
+        margin: 8px 0;
+        padding: 8px 20px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        font-family: "Work Sans", sans-serif;
+      }
+      .site-mobile-menu .btn-primary {
+        background-color: #00204a;
+        border-color: #00204a;
+        color: rgba(255, 255, 255, 0.5);;
+
+      }
+      .site-mobile-menu form a,
+      .site-mobile-menu .become-seller-link {
+        color: rgba(255, 255, 255, 0.5);;
+        font-weight: 500;
+      }
+      .site-mobile-menu .btn-primary:hover {
+        background-color: #003166;
+        border-color: #003166;
+        transform: translateY(-2px);
+      }
+      .site-mobile-menu .auth-buttons {
+        padding: 15px;
+        border-top: 1px solid rgba(0,0,0,0.1);
+        margin-top: 10px;
+      }
+      /* Navigation menu button styles */
+      .site-menu .btn-primary {
+        padding: 8px 20px;
+        border-radius: 8px;
+        background-color: #00204a;
+        border-color: #00204a;
+        color: #fff;
+        transition: all 0.3s ease;
+      }
+      .site-menu .btn-primary:hover {
+        background-color: #003166;
+        border-color: #003166;
+        transform: translateY(-2px);
+      }
+      .site-menu .become-seller-link {
+        color: rgba(255, 255, 255, 0.5);
+      }
       .flash-message-container {
-        position: fixed;
+        position: fixed !important;
         top: 20px;
         right: 20px;
         z-index: 1050; /* Ensure it's above other elements like modals */
@@ -38,7 +88,7 @@
 
       /* Floating chat button aligned with theme */
       .chat-fab {
-        position: fixed;
+        position: fixed !important;
         right: 20px;
         bottom: 20px;
         width: 56px;
@@ -126,9 +176,23 @@
       /* Ensure dropdown items wrap text (Bootstrap sets nowrap) */
       .notif-menu .dropdown-item { white-space: normal; }
       .site-nav, .site-nav .dropdown, .site-nav .dropdown-menu { overflow: visible !important; }
+
+      /* Sticky Navbar */
+      .site-nav {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 1000;
+        background-color: #ffffff00; /* Ensure background color for visibility */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Optional: add shadow for better visual separation */
+      }
+
+
     </style>
   </head>
-  <body>
+  <body style="padding-top: 50px;">
     <div class="site-mobile-menu site-navbar-target">
       <div class="site-mobile-menu-header">
         <div class="site-mobile-menu-close">
@@ -187,18 +251,25 @@
               </li>
               {% if not user.is_seller %}
               <li class="{% if request.resolver_match.url_name == 'become_seller' %}active{% endif %}">
-                   <form method="post" action="{% url 'become_seller' %}">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-primary" >Become Seller</button>
-                    </form>
-               </li>
-               {% else %}
-
-                <li class="{% if request.resolver_match.url_name == 'seller_dashboard' %}active{% endif %}">
-                  <a href="{% url 'seller_dashboard' %}">Seller Dashboard</a>
-
-               {% endif%}
-            {% if user.is_authenticated %}
+                <form method="post" action="{% url 'become_seller' %}" style="display: inline;">
+                  {% csrf_token %}
+                  <a href="#" onclick="this.closest('form').submit(); return false;" class="become-seller-link">Become Seller</a>
+                </form>
+              </li>
+              {% else %}
+              <li class="{% if request.resolver_match.url_name == 'seller_dashboard' %}active{% endif %}">
+                <a href="{% url 'seller_dashboard' %}">Seller Dashboard</a>
+              </li>
+              {% endif %}
+              
+              {% if not user.is_authenticated %}
+              <li>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
+              </li>
+              <li>
+                <a href="#" data-bs-toggle="modal" data-bs-target="#signUpModal">Register</a>
+              </li>
+              {% else %}
               <li class="has-children {% if 'properties' in request.path %}active{% endif %}">
                 <a href="#">{{ user.first_name}} {{ user.last_name}} </a>
                 <ul class="dropdown">
@@ -210,13 +281,6 @@
                     </form>
                   </li>
                 </ul>
-              </li>
-              {% else %}
-              <li>
-                <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
-              </li>
-              <li>
-                <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#signUpModal">Register</a>
               </li>
             {% endif %}
             <li class="nav-item dropdown d-inline-block me-2">

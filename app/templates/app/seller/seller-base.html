@@ -42,6 +42,9 @@
     </style>
   </head>
   <body>
+    <!-- Mobile Menu Container -->
+    {% include 'app/seller/seller-base-mobile.html' %}
+    
     <!-- Navbar -->
     <nav class="site-nav">
       <div class="container">
@@ -238,6 +241,7 @@
     <script src="{% static 'js/tiny-slider.js' %}"></script>
     <script src="{% static 'js/aos.js' %}"></script>
     <script src="{% static 'js/custom.js' %}"></script>
+    <script src="{% static 'js/navbar.js' %}"></script>
     {% block extra_js %}{% endblock %}
 
     <!-- Custom Script -->

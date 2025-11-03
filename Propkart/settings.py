@@ -32,7 +32,7 @@ SECRET_KEY = 'django-insecure-vf_5#b(zncj8q=&*a)coqh8+sw9o3zm3jzqxayfu@&1u@o7li@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = "app.User" 
 # Application definition
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
     'app'
 ]
 

@@ -1,25 +1,50 @@
-import random,os,string
-from datetime import timedelta
-from django.http import JsonResponse
+import os
+import random
+import string
+import json
+from io import BytesIO
+from datetime import timedelta,datetime
+from calendar import month_abbr
+
+# Django Core
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import authenticate, login,get_user_model 
 from django.contrib import messages
-from .decorators import modal_login_required
-from django.core.mail import send_mail, EmailMultiAlternatives
-from django.conf import settings
-from django.template.loader import render_to_string
-from django.utils import timezone
+from django.contrib.auth import authenticate, login, get_user_model, logout
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import strip_tags
+from django.utils.dateparse import parse_datetime
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
 from django.core.files.storage import FileSystemStorage
 from django.core.files import File
-from .models import SellerRequest, Property, PropertyImage, PropertyImportKey, Wishlist,Message, Notification, Enquiry, VisitRequest, PasswordResetToken,Contact
-from django.db.models import Sum, Q, Max, Count
-from calendar import month_abbr
+from django.core.mail import send_mail, EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.db.models import Q, Sum, Max, Count
+
+# Custom Imports
+from .decorators import modal_login_required
 from .chat_service import ChatService
-from .models import ChatSession, ChatMessage
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse
+from .models import (
+    SellerRequest, Property, PropertyImage, PropertyImportKey, Wishlist,
+    Message, Notification, Enquiry, VisitRequest, PasswordResetToken, Contact,
+    ChatSession, ChatMessage
+)
+
+# ReportLab (PDF Generation)
+from reportlab.lib import colors
+from reportlab.lib.units import inch, cm
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.utils import ImageReader
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Image as ReportLabImage,
+    PageBreak, Table, TableStyle, HRFlowable
+)
+
 
 def delete_property_images(property_instance):
     """Helper function to delete all images associated with a property"""
@@ -491,6 +516,74 @@ def property_update(request, property_id):
         messages.success(request, "Property updated successfully!")
         return redirect('my_properties')
     
+
+
+# ===================================================================
+# STYLING CONSTANTS (Refined for Premium Look)
+# ===================================================================
+COLOR_PRIMARY = colors.HexColor('#c0a062')       # Brushed Gold
+COLOR_PRIMARY_LIGHT = colors.HexColor('#f3efe5') # Light Gold/Beige (For accents)
+COLOR_INK = colors.HexColor('#222222')           # Charcoal (Main Text)
+COLOR_BG = colors.HexColor('#f9f7f4')             # Warm Off-white (Overall background)
+COLOR_GRAY_LIGHT = colors.HexColor('#e9e9e9')
+COLOR_GRAY_DARK = colors.HexColor('#444444')
+COLOR_WHITE = colors.white
+
+FONT_BOLD = 'Helvetica-Bold'
+FONT_NORMAL = 'Helvetica'
+FONT_ITALIC = 'Helvetica-Oblique'
+
+# Register fonts (if not already registered)
+try:
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    # if FONT_NORMAL not in pdfmetrics.getRegisteredFontNames():
+    #     pdfmetrics.registerFont(TTFont(FONT_NORMAL, 'DejaVuSans.ttf'))
+    # if FONT_BOLD not in pdfmetrics.getRegisteredFontNames():
+    #     pdfmetrics.registerFont(TTFont(FONT_BOLD, 'DejaVuSans-Bold.ttf'))
+except Exception as e:
+    print(f"Error registering fonts: {e}")
+
+MARGIN = 2.0 * cm # Increased margin for a cleaner look
+PAGE_WIDTH, PAGE_HEIGHT = A4
+CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
+FOOTER_HEIGHT = 50 # Reduced footer height
+
+# ===================================================================
+# UTILITY FUNCTIONS
+# ===================================================================
+
+def _safe_image(path):
+    """Load image safely, return None if fails"""
+    try:
+        if not path or not os.path.exists(path):
+            return None
+        return ImageReader(path)
+    except Exception:
+        return None
+
+def _scale_to_fit(img_w, img_h, max_w, max_h):
+    """Scale image to fit within bounds, maintaining aspect ratio"""
+    if img_w <= 0 or img_h <= 0:
+        return 0, 0
+    ratio = min(max_w / float(img_w), max_h / float(img_h))
+    return img_w * ratio, img_h * ratio
+
+def _scale_to_fill(img_w, img_h, target_w, target_h):
+    """Scale image to fill bounds, maintaining aspect ratio (cropping)"""
+    if img_w <= 0 or img_h <= 0:
+        return 0, 0
+    ratio = max(target_w / float(img_w), target_h / float(img_h))
+    return img_w * ratio, img_h * ratio
+
+def _format_price(value):
+    """Format price to ₹X,XX,XXX"""
+    try:
+        # Enforce comma separation and zero decimal points for clean presentation
+        return f"₹{float(value):,.0f}" 
+    except (ValueError, TypeError):
+        return "N/A"
+
 @modal_login_required
 def property_delete(request, property_id):
     property_instance = get_object_or_404(Property, id=property_id)
@@ -516,6 +609,150 @@ def property_delete(request, property_id):
 
     messages.error(request, "Invalid request.")
     return redirect('my_properties')
+
+@modal_login_required
+def export_wishlist_pdf(request):
+    user_wishlist = Wishlist.objects.filter(user=request.user).select_related('property', 'property__seller').prefetch_related('property__images')
+
+    # === COLORS & STYLES ===
+    COLOR_PRIMARY = colors.HexColor("#5fbf7f")     # PropKart light green
+    COLOR_SECONDARY = colors.HexColor("#c0a062")   # Golden accent
+    COLOR_TEXT = colors.HexColor("#222222")
+    COLOR_GRAY = colors.HexColor("#555555")
+    COLOR_BG = colors.whitesmoke
+
+    FONT_BOLD = "Helvetica-Bold"
+    FONT_NORMAL = "Helvetica"
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, leftMargin=2*cm, rightMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+    styles = getSampleStyleSheet()
+
+    # Custom paragraph styles
+    title_style = ParagraphStyle(
+        "TitleStyle", parent=styles["Title"],
+        fontName=FONT_BOLD, fontSize=26, textColor=COLOR_PRIMARY,
+        alignment=TA_CENTER, spaceAfter=20
+    )
+    subtitle_style = ParagraphStyle(
+        "SubTitle", parent=styles["Normal"],
+        fontName=FONT_NORMAL, fontSize=12, textColor=COLOR_GRAY,
+        alignment=TA_CENTER, spaceAfter=30
+    )
+    header_style = ParagraphStyle(
+        "Header", parent=styles["Heading2"],
+        fontName=FONT_BOLD, fontSize=16, textColor=COLOR_SECONDARY,
+        alignment=TA_LEFT, spaceAfter=10
+    )
+    normal_style = ParagraphStyle(
+        "NormalText", parent=styles["Normal"],
+        fontName=FONT_NORMAL, fontSize=10, textColor=COLOR_TEXT,
+        leading=14, spaceAfter=6
+    )
+
+    # === STORY SETUP ===
+    story = []
+
+    # HEADER
+    story.append(Paragraph("Your PropKart Wishlist", title_style))
+    story.append(Paragraph(f"Generated on {datetime.now().strftime('%b %d, %Y')}", subtitle_style))
+    story.append(HRFlowable(width="100%", color=COLOR_SECONDARY, thickness=2))
+    story.append(Spacer(1, 0.4*inch))
+
+    # EMPTY STATE
+    if not user_wishlist:
+        story.append(Paragraph("Your wishlist is currently empty.", normal_style))
+        doc.build(story)
+        buffer.seek(0)
+        return HttpResponse(buffer, content_type="application/pdf", headers={
+            "Content-Disposition": "attachment; filename=wishlist.pdf"
+        })
+
+    # === PROPERTY CARDS ===
+    for item in user_wishlist:
+        prop = item.property
+
+        # Property Title
+        story.append(Paragraph(prop.title, header_style))
+
+        # Property Images
+        property_images = prop.images.all()
+        if property_images:
+            # Create a list to hold image flowables
+            image_flowables = []
+            for img_obj in property_images:
+                img_reader = _safe_image(img_obj.image.path)
+                if img_reader:
+                    img_w, img_h = img_reader.getSize()
+                    max_w, max_h = 2.5*inch, 2*inch # Max size for images in a 2-column layout
+                    scale = min(max_w / img_w, max_h / img_h)
+                    image_flowables.append(ReportLabImage(img_obj.image.path, width=img_w * scale, height=img_h * scale))
+
+            # Arrange images in a 2-column table
+            if image_flowables:
+                # Pad with None to make it a multiple of 2 for table rows
+                while len(image_flowables) % 2 != 0:
+                    image_flowables.append(Spacer(1,0.1*inch))
+
+                # Create rows for the table
+                image_rows = []
+                for i in range(0, len(image_flowables), 2):
+                    image_rows.append([image_flowables[i], image_flowables[i+1]])
+
+                image_table = Table(image_rows, colWidths=[4*cm, 4*cm]) # Adjust colWidths as needed
+                image_table.setStyle(TableStyle([
+                    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                    ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                    ('LEFTPADDING', (0,0), (-1,-1), 6),
+                    ('RIGHTPADDING', (0,0), (-1,-1), 6),
+                    ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+                    ('TOPPADDING', (0,0), (-1,-1), 6),
+                ]))
+                story.append(image_table)
+                story.append(Spacer(1, 0.2*inch))
+
+        # Property Info (Table)
+        data = [
+            ["💰 Price", f"{_format_price(prop.price)}"],
+            ["📍 Location", f"{prop.location}, {prop.city}, {prop.state}, {prop.country}"],
+            ["🏡 Type", prop.get_type_display()],
+            ["🛏 Bedrooms", prop.bedrooms or "N/A"],
+            ["🚿 Bathrooms", prop.bathrooms or "N/A"],
+            ["📏 Area", f"{prop.length or 'N/A'} x {prop.width or 'N/A'} sqft"],
+            ["🪑 Furnished", "Yes" if prop.furnished else "No"],
+            ["👤 Seller Name", f"{prop.seller.first_name} {prop.seller.last_name}"],
+            ["📧 Seller Email", prop.seller.email],
+            ["📞 Seller Mobile", prop.seller.mobile or "N/A"],
+        ]
+
+        table = Table(data, colWidths=[3*cm, 11*cm])
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_PRIMARY),
+            ("TEXTCOLOR", (0, 0), (-1, -1), colors.black),
+            ("FONTNAME", (0, 0), (-1, -1), FONT_NORMAL),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("INNERGRID", (0, 0), (-1, -1), 0.25, colors.grey),
+            ("BOX", (0, 0), (-1, -1), 0.5, colors.grey),
+            ("BACKGROUND", (0, 0), (0, -1), COLOR_SECONDARY),
+            ("TEXTCOLOR", (0, 0), (0, -1), colors.white),
+        ]))
+        story.append(table)
+        story.append(Spacer(1, 0.2*inch))
+
+        # Description
+        story.append(Paragraph("<b>Description:</b>", normal_style))
+        story.append(Paragraph(prop.description or "No description provided.", normal_style))
+        story.append(Spacer(1, 0.4*inch))
+        story.append(HRFlowable(width="100%", color=COLOR_GRAY, thickness=0.8))
+        story.append(Spacer(1, 0.4*inch))
+
+    # === BUILD PDF ===
+    doc.build(story)
+    buffer.seek(0)
+    return HttpResponse(buffer, content_type="application/pdf", headers={
+        "Content-Disposition": "attachment; filename=wishlist.pdf"
+    })
 
 @modal_login_required
 def properties_bulk_delete(request):
@@ -953,7 +1190,7 @@ def seller_import_properties(request):
         zip_file = request.FILES['images_zip']
         
         # Validate ZIP file size (max 50MB)
-        MAX_ZIP_MB = 50
+        MAX_ZIP_MB = 500
         MAX_ZIP_BYTES = MAX_ZIP_MB * 1024 * 1024
         if zip_file.size > MAX_ZIP_BYTES:
             messages.error(request, f'ZIP file too large. Maximum size: {MAX_ZIP_MB}MB')
@@ -1209,6 +1446,9 @@ def property_detail(request, property_id):
 
 @require_http_methods(["GET"])
 def property_brochure_pdf(request, property_id):
+    import os
+    from django.http import HttpResponse
+    from django.shortcuts import get_object_or_404
     from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.units import cm
@@ -1218,215 +1458,479 @@ def property_brochure_pdf(request, property_id):
     from reportlab.platypus import Paragraph
     from reportlab.lib.enums import TA_LEFT, TA_CENTER
 
-    prop = get_object_or_404(Property.objects.select_related('seller').filter(is_verified=True, is_hidden=False), id=property_id)
-    
-    def _safe_image(path):
-        """Load image safely, return None if fails"""
-        try:
-            if not path or not os.path.exists(path):
-                return None
-            return ImageReader(path)
-        except Exception:
-            return None
-    
-    def _scale_to_fit(img_w, img_h, max_w, max_h):
-        """Scale image to fit within bounds"""
+    # ===================================================================
+    # STYLING CONSTANTS (Refined for Premium Look)
+    # ===================================================================
+    COLOR_PRIMARY = colors.HexColor('#c0a062')       # Brushed Gold
+    COLOR_PRIMARY_LIGHT = colors.HexColor('#f3efe5') # Light Gold/Beige (For accents)
+    COLOR_INK = colors.HexColor('#222222')           # Charcoal (Main Text)
+    COLOR_BG = colors.HexColor('#f9f7f4')             # Warm Off-white (Overall background)
+    COLOR_GRAY_LIGHT = colors.HexColor('#e9e9e9')
+    COLOR_GRAY_DARK = colors.HexColor('#444444')
+    COLOR_WHITE = colors.white
+
+    FONT_BOLD = 'Helvetica-Bold'
+    FONT_NORMAL = 'Helvetica'
+    FONT_ITALIC = 'Helvetica-Oblique'
+
+    MARGIN = 2.0 * cm # Increased margin for a cleaner look
+    PAGE_WIDTH, PAGE_HEIGHT = A4
+    CONTENT_WIDTH = PAGE_WIDTH - (2 * MARGIN)
+    FOOTER_HEIGHT = 50 # Reduced footer height
+
+    # ===================================================================
+    # UTILITY FUNCTIONS
+    # ===================================================================
+
+
+
+    def _scale_to_fill(img_w, img_h, target_w, target_h):
+        """Scale image to fill bounds, maintaining aspect ratio (cropping)"""
         if img_w <= 0 or img_h <= 0:
-            return max_w, max_h
-        ratio = min(max_w / float(img_w), max_h / float(img_h))
+            return 0, 0
+        ratio = max(target_w / float(img_w), target_h / float(img_h))
         return img_w * ratio, img_h * ratio
-    
+
     def _format_price(value):
+        """Format price to ₹X,XX,XXX"""
         try:
-            return f"₹{float(value):,.0f}"
-        except Exception:
+            # Enforce comma separation and zero decimal points for clean presentation
+            return f"₹{float(value):,.0f}" 
+        except (ValueError, TypeError):
             return str(value)
-    
-    def _draw_header(c, width, height, title, price, address):
-        """Draw header with title, price, address"""
-        c.setFont('Helvetica-Bold', 16)
-        c.setFillColor(colors.HexColor('#0d6efd'))
-        c.drawString(40, height - 40, 'PropKart')
+
+    # ===================================================================
+    # DRAWING PRIMITIVES (Refined)
+    # ===================================================================
+
+    def _draw_page_header(c, brand_name, page_num=None):
+        """Draws the clean, elevated header with the Gold badge."""
+        y = PAGE_HEIGHT - 35
+        c.saveState()
         
-        c.setFont('Helvetica-Bold', 20)
-        c.setFillColor(colors.black)
-        c.drawString(40, height - 70, title[:50])
+        # Background (White box for a clean header area)
+        c.setFillColor(COLOR_WHITE)
+        c.rect(0, PAGE_HEIGHT - 70, PAGE_WIDTH, 70, fill=1, stroke=0)
         
-        c.setFont('Helvetica-Bold', 18)
-        c.setFillColor(colors.HexColor('#0d6efd'))
-        c.drawRightString(width - 40, height - 70, price)
+        # Brand Name (Charcoal)
+        c.setFont(FONT_BOLD, 22)
+        c.setFillColor(COLOR_INK)
+        c.drawString(MARGIN, y, brand_name)
         
-        c.setFont('Helvetica', 11)
-        c.setFillColor(colors.grey)
-        c.drawString(40, height - 90, address[:80])
+        # Brochure Badge (Gold background, White text)
+        badge_text = "PROPERTY BROCHURE"
+        badge_width = c.stringWidth(badge_text, FONT_BOLD, 9) + 24
+        c.setFillColor(COLOR_PRIMARY)
+        c.roundRect(PAGE_WIDTH - MARGIN - badge_width, y - 10, badge_width, 20, 10, fill=1, stroke=0)
         
-        return height - 110
-    
-    def _draw_specs(c, x, y, specs):
-        """Draw specs grid"""
-        col_w = 120
-        row_h = 35
-        for i, (label, value) in enumerate(specs):
-            col_x = x + (i % 4) * col_w
-            row_y = y - (i // 4) * row_h
+        c.setFont(FONT_BOLD, 9)
+        c.setFillColor(COLOR_WHITE)
+        c.drawCentredString(PAGE_WIDTH - MARGIN - (badge_width / 2), y - 4, badge_text)
+
+        # Page Number
+        if page_num is not None:
+            c.setFont(FONT_NORMAL, 10)
+            c.setFillColor(COLOR_GRAY_DARK)
+            c.drawRightString(PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 55, f"Page {page_num}")
+        
+        # Clean Divider Line
+        c.setStrokeColor(COLOR_GRAY_LIGHT)
+        c.setLineWidth(1)
+        c.line(MARGIN, PAGE_HEIGHT - 70, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 70)
+        
+        c.restoreState()
+        return PAGE_HEIGHT - 70 # Return starting Y for content
+
+    def _draw_page_footer(c):
+        """Draws the subtle, branded footer."""
+        c.saveState()
+        
+        # Simple Gold Divider Line
+        c.setStrokeColor(COLOR_PRIMARY)
+        c.setLineWidth(1.5)
+        c.line(MARGIN, FOOTER_HEIGHT + 15, PAGE_WIDTH - MARGIN, FOOTER_HEIGHT + 15)
+        
+        # Text
+        c.setFont(FONT_NORMAL, 9)
+        c.setFillColor(COLOR_GRAY_DARK)
+        c.drawString(MARGIN, FOOTER_HEIGHT - 5, "Confidential Property Details - PropKart")
+        c.drawRightString(PAGE_WIDTH - MARGIN, FOOTER_HEIGHT - 5, "© All Rights Reserved")
+        
+        c.restoreState()
+
+    def _draw_hero(c, x, y, width, prop, hero_img_obj):
+        """Draws the hero section with a focus on hierarchy."""
+        c.saveState()
+        
+        y -= 1.0 * cm # Extra space from header
+
+        # --- Property Title ---
+        style_title = ParagraphStyle(
+            name='Title', fontName=FONT_BOLD, fontSize=26,
+            textColor=COLOR_INK, leading=30, spaceAfter=8
+        )
+        p_title = Paragraph(prop.title, style_title)
+        w, h_title = p_title.wrapOn(c, width * 0.7, 100) # Give it 70% width
+        p_title.drawOn(c, x, y - h_title)
+        y -= (h_title + 0.2 * cm)
+        
+        # --- Address ---
+        address_text = f"{prop.location}, {prop.city}, {prop.state}"
+        style_address = ParagraphStyle(
+            name='Address', fontName=FONT_NORMAL, fontSize=12,
+            textColor=COLOR_GRAY_DARK, leading=16
+        )
+        p_address = Paragraph(address_text, style_address)
+        w, h_address = p_address.wrapOn(c, width * 0.7, 50)
+        p_address.drawOn(c, x, y - h_address)
+        y_text_end = y - h_address # End of text block
+
+        # --- Price Tag (Gold Box) ---
+        price_box_height = 50
+        price_box_width = width * 0.35 # Fixed width
+        price_box_x = x + width - price_box_width
+        price_box_y = PAGE_HEIGHT - 70 - 1.0 * cm - price_box_height # Align with title block top
+
+        c.setFillColor(COLOR_PRIMARY)
+        c.roundRect(price_box_x, price_box_y, price_box_width, price_box_height, 8, fill=1, stroke=0)
+        
+        c.setFont(FONT_BOLD, 10)
+        c.setFillColor(colors.white)
+        c.drawString(price_box_x + 15, price_box_y + 30, "ASKING PRICE")
+        
+        c.setFont(FONT_BOLD, 18)
+        c.drawString(price_box_x + 15, price_box_y + 10, _format_price(prop.price))
+        
+        y = y_text_end - (1.0 * cm) # Start of image space below text
+
+        # --- Hero Image (with large rounding) ---
+        if hero_img_obj:
+            try:
+                img_h_target = 200 # Fixed height
+                img_w, img_h = hero_img_obj.getSize()
+                draw_w, draw_h = _scale_to_fit(img_w, img_h, width, img_h_target)
+                
+                img_x = x + (width - draw_w) / 2
+                
+                # Clip path for rounded corners
+                c.saveState()
+                p = c.beginPath()
+                p.roundRect(img_x, y - draw_h, draw_w, draw_h, 12) # Larger radius
+                c.clipPath(p, stroke=0, fill=0)
+                c.drawImage(hero_img_obj, img_x, y - draw_h, width=draw_w, height=draw_h, preserveAspectRatio=True)
+                c.restoreState()
+                
+                y -= (draw_h + (1.0 * cm))
+            except Exception:
+                pass
+                
+        c.restoreState()
+        return y
+
+    def _draw_section_title(c, x, y, title):
+        """Draws the section title with an elegant Gold underline."""
+        c.saveState()
+        
+        y -= (0.5 * cm)
+        
+        # Title Text
+        c.setFont(FONT_BOLD, 18)
+        c.setFillColor(COLOR_INK)
+        c.drawString(x, y, title.upper())
+        
+        # Gold Underline
+        c.setStrokeColor(COLOR_PRIMARY)
+        c.setLineWidth(2)
+        c.line(x, y - 5, x + c.stringWidth(title.upper(), FONT_BOLD, 18), y - 5)
+        
+        c.restoreState()
+        return y - (0.8 * cm)
+
+    def _draw_specs(c, x, y, width, specs):
+        """Draws the spec grid with a cleaner card design."""
+        c.saveState()
+        
+        num_cols = 4
+        gap = 0.5 * cm
+        col_width = (width - (num_cols - 1) * gap) / num_cols
+        row_height = 65
+        
+        current_x = x
+        current_y = y
+        
+        for i, (icon, label, value) in enumerate(specs):
+            if i > 0 and i % num_cols == 0:
+                current_x = x
+                current_y -= (row_height + gap)
             
-            # Draw spec box
-            c.setStrokeColor(colors.lightgrey)
-            c.setFillColor(colors.white)
-            c.rect(col_x, row_y - 25, col_w - 5, 25, fill=1, stroke=1)
+            # Card background (Subtle light beige)
+            c.setFillColor(COLOR_PRIMARY_LIGHT)
+            c.roundRect(current_x, current_y - row_height, col_width, row_height, 6, fill=1, stroke=0)
+            
+            # Icon/Value
+            c.setFont(FONT_BOLD, 16)
+            c.setFillColor(COLOR_PRIMARY)
+            c.drawString(current_x + 10, current_y - 25, str(value)[:18])
             
             # Label
-            c.setFont('Helvetica', 9)
-            c.setFillColor(colors.grey)
-            c.drawString(col_x + 3, row_y - 12, label)
+            c.setFont(FONT_NORMAL, 9)
+            c.setFillColor(COLOR_GRAY_DARK)
+            c.drawString(current_x + 10, current_y - 45, label.upper())
             
-            # Value
-            c.setFont('Helvetica-Bold', 12)
-            c.setFillColor(colors.black)
-            c.drawString(col_x + 3, row_y - 22, str(value)[:15])
+            current_x += (col_width + gap)
+            
+        num_rows = (len(specs) + num_cols - 1) // num_cols
+        final_y = y - (num_rows * row_height) - ((num_rows - 1) * gap)
         
-        rows = (len(specs) + 3) // 4
-        return y - rows * row_h - 10
-    
-    def _draw_paragraph(c, x, y, text, width, font_size=11):
-        """Draw wrapped text"""
+        c.restoreState()
+        return final_y - (0.5 * cm)
+
+    def _draw_paragraph(c, x, y, text, width, font_size=11, color=COLOR_GRAY_DARK):
+        """Draws a wrapped paragraph."""
+        c.saveState()
         style = ParagraphStyle(
-            name='Body', fontName='Helvetica', fontSize=font_size,
-            textColor=colors.black, alignment=TA_LEFT, leading=font_size + 2
+            name='Body', fontName=FONT_NORMAL, fontSize=font_size,
+            textColor=color, alignment=TA_LEFT, leading=font_size * 1.6
         )
         p = Paragraph(text.replace('\n', '<br/>'), style)
-        w, h = p.wrapOn(c, width, 400)
+        w, h = p.wrapOn(c, width, PAGE_HEIGHT)
         p.drawOn(c, x, y - h)
-        return y - h - 8
-    
-    def _draw_gallery(c, images, width, height, start_y):
-        """Draw image gallery"""
-        if not images:
-            return start_y
+        c.restoreState()
+        return y - h - (1.0 * cm) # Increased vertical padding
+
+    def _draw_seller_card(c, x, y, width, seller_name, seller_email):
+        """Draws the seller card, now including email."""
+        c.saveState()
         
-        x_margin = 40
-        gap = 8
-        cell_w = (width - x_margin * 2 - gap * 2) / 3.0
-        cell_h = cell_w * 0.75
+        card_height = 80 # Increased height to accommodate email
+        card_y = y - card_height
         
-        x = x_margin
-        y = start_y
+        # Card background (White with a subtle Charcoal border)
+        c.setFillColor(COLOR_WHITE)
+        c.setStrokeColor(COLOR_GRAY_LIGHT)
+        c.roundRect(x, card_y, width, card_height, 10, fill=1, stroke=1)
         
-        for idx, img_path in enumerate(images[:9]):  # Limit to 9 images
-            if y - cell_h < 60:
+        avatar_x = x + 30
+        avatar_y = card_y + (card_height / 2)
+        
+        # Avatar circle (Gold)
+        c.setFillColor(COLOR_PRIMARY)
+        c.circle(avatar_x, avatar_y, 22, fill=1, stroke=0)
+        
+        # Avatar initial
+        initial = (seller_name[0] if seller_name else 'S').upper()
+        c.setFont(FONT_BOLD, 18)
+        c.setFillColor(COLOR_WHITE)
+        c.drawCentredString(avatar_x, avatar_y - 7, initial)
+        
+        # --- Text Content ---
+        text_x = avatar_x + 35
+        
+        # Seller Name
+        c.setFont(FONT_BOLD, 14)
+        c.setFillColor(COLOR_INK)
+        c.drawString(text_x, card_y + 45, seller_name)
+        
+        # Email Label
+        c.setFont(FONT_NORMAL, 9)
+        c.setFillColor(COLOR_GRAY_DARK)
+        c.drawString(text_x, card_y + 25, "Email:")
+        
+        # Seller Email (Italic, Charcoal)
+        c.setFont(FONT_ITALIC, 11)
+        c.setFillColor(COLOR_INK)
+        c.drawString(text_x + 35, card_y + 25, seller_email or 'Not Provided')
+        
+        c.restoreState()
+        return card_y - (1.0 * cm)
+
+    def _draw_gallery(c, x, y, width, images, page_num_ref):
+        """Draws the gallery grid with rounded image frames and a clean overlay."""
+        c.saveState()
+        
+        num_cols = 3
+        gap = 0.8 * cm # Increased gap
+        cell_w = (width - (num_cols - 1) * gap) / num_cols
+        cell_h = cell_w * 0.70 # Slightly wider aspect ratio
+        
+        current_x = x
+        current_y = y
+        
+        for idx, img_obj in enumerate(images[:9]):
+            # --- Page Break Check ---
+            if current_y - cell_h < (MARGIN + FOOTER_HEIGHT):
+                _draw_page_footer(c)
                 c.showPage()
-                c.setPageCompression(1)  # Enable compression
-                x = x_margin
-                y = height - 60
-            
-            img = _safe_image(img_path)
-            if img:
+                page_num_ref[0] += 1
+                current_y = _draw_page_header(c, "PropKart", page_num_ref[0])
+                current_y -= MARGIN
+                current_x = x
+                
+                # Redraw title for new page
+                current_y = _draw_section_title(c, x, current_y, "Gallery (Continued)")
+        
+            if img_obj:
                 try:
-                    iw, ih = img.getSize()
-                    draw_w, draw_h = _scale_to_fit(iw, ih, cell_w, cell_h)
-                    offset_x = x + (cell_w - draw_w) / 2.0
-                    offset_y = y - draw_h
-                    c.drawImage(img, offset_x, offset_y, width=draw_w, height=draw_h, preserveAspectRatio=True)
+                    # Draw outer frame
+                    c.setFillColor(COLOR_WHITE)
+                    c.setStrokeColor(COLOR_GRAY_LIGHT)
+                    c.roundRect(current_x, current_y - cell_h, cell_w, cell_h, 8, fill=1, stroke=1)
+                    
+                    # Clip and draw image
+                    c.saveState()
+                    p = c.beginPath()
+                    p.roundRect(current_x, current_y - cell_h, cell_w, cell_h, 8)
+                    c.clipPath(p, stroke=0, fill=0)
+                    
+                    iw, ih = img_obj.getSize()
+                    draw_w, draw_h = _scale_to_fill(iw, ih, cell_w, cell_h)
+                    offset_x = current_x + (cell_w - draw_w) / 2
+                    offset_y = (current_y - cell_h) + (cell_h - draw_h) / 2
+                    
+                    c.drawImage(img_obj, offset_x, offset_y, width=draw_w, height=draw_h)
+                    c.restoreState()
+                    
+                    # Overlay (Subtle Gradient effect)
+                    c.setFillColor(COLOR_INK, 0.4) # Dark, slightly transparent
+                    c.rect(current_x, current_y - cell_h, cell_w, 25, fill=1, stroke=0)
+                    
+                    # Overlay Text (Gold)
+                    c.setFont(FONT_BOLD, 10)
+                    c.setFillColor(COLOR_PRIMARY)
+                    c.drawRightString(current_x + cell_w - 10, current_y - cell_h + 8, f"PHOTO {idx + 1}")
+                    
                 except Exception:
                     pass
             
-            x += cell_w + gap
-            if (idx + 1) % 3 == 0:
-                x = x_margin
-                y -= cell_h + gap
+            # Increment position
+            current_x += (cell_w + gap)
+            if (idx + 1) % num_cols == 0:
+                current_x = x
+                current_y -= (cell_h + gap)
         
-        return y
-    
-    # Get property images
-    images = []
-    for img in PropertyImage.objects.filter(property=prop):
-        try:
-            if img.image and hasattr(img.image, 'path') and os.path.exists(img.image.path):
-                images.append(img.image.path)
-        except Exception:
-            continue
-    
-    # Generate PDF
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="propkart_{property_id}_brochure.pdf"'
-    
-    c = canvas.Canvas(response, pagesize=A4)
-    c.setPageCompression(1)  # Enable compression for faster generation
-    width, height = A4
-    
-    # Header
-    price_text = _format_price(prop.price)
-    address_text = f"{prop.location}, {prop.city}, {prop.state}"
-    y = _draw_header(c, width, height, prop.title, price_text, address_text)
-    
-    # Hero image
-    if images:
-        hero_img = _safe_image(images[0])
-        if hero_img:
+        c.restoreState()
+        return current_y
+
+
+    # ===================================================================
+    # MAIN DJANGO VIEW (Revised)
+    # ===================================================================
+
+    # NOTE: You must ensure 'Property', 'PropertyImage', and the related 'User'/'Seller'
+    # models are imported and accessible in your actual Django environment.
+    def property_brochure_pdf(request, property_id):
+        
+        # --- 1. Get Data ---
+        prop = get_object_or_404(Property.objects.select_related('seller').filter(is_verified=True, is_hidden=False), id=property_id)
+        
+        # Get images
+        image_paths = []
+        for img in PropertyImage.objects.filter(property=prop).order_by('id'): # Order by ID for consistency
             try:
-                iw, ih = hero_img.getSize()
-                max_w = width - 80
-                max_h = 200
-                draw_w, draw_h = _scale_to_fit(iw, ih, max_w, max_h)
-                x = (width - draw_w) / 2.0
-                y_hero = y - draw_h - 10
-                c.drawImage(hero_img, x, y_hero, width=draw_w, height=draw_h, preserveAspectRatio=True)
-                y = y_hero - 20
+                if img.image and hasattr(img.image, 'path') and os.path.exists(img.image.path):
+                    image_paths.append(img.image.path)
             except Exception:
-                pass
-    
-    # Specs
-    specs = [
-        ("Type", str(prop.type).title()),
-        ("Bedrooms", prop.bedrooms or '—'),
-        ("Bathrooms", prop.bathrooms or '—'),
-        ("Rooms", prop.rooms or '—'),
-        ("Dimensions", f"{prop.length or '—'} × {prop.width or '—'} ft"),
-        ("Furnished", "Yes" if prop.furnished else "No"),
-        ("Views", prop.views),
-        ("Listed", prop.created_at.strftime('%b %d, %Y') if getattr(prop, 'created_at', None) else '—'),
-    ]
-    y = _draw_specs(c, 40, y, specs)
-    
-    # Description
-    c.setFont('Helvetica-Bold', 14)
-    c.setFillColor(colors.black)
-    c.drawString(40, y, 'Property Overview')
-    y -= 20
-    
-    desc = prop.description or 'No description provided.'
-    y = _draw_paragraph(c, 40, y, desc, width - 80)
-    
-    # Seller info
-    c.setFont('Helvetica-Bold', 14)
-    c.drawString(40, y, 'Seller Information')
-    y -= 20
-    
-    seller_name = f"{getattr(prop.seller, 'first_name', '')} {getattr(prop.seller, 'last_name', '')}".strip() or 'Seller'
-    y = _draw_paragraph(c, 40, y, seller_name, width - 80)
-    
-    # Gallery
-    if images:
-        if y < 120:
+                continue
+                
+        image_objects = [_safe_image(p) for p in image_paths]
+        image_objects = [img for img in image_objects if img] # Filter out None
+        hero_image = image_objects[0] if image_objects else None
+        
+        # Get seller info
+        seller_name = "PropKart Agent"
+        seller_email = "Contact Sales"
+        if prop.seller:
+            seller_name = f"{getattr(prop.seller, 'first_name', '')} {getattr(prop.seller, 'last_name', '')}".strip()
+            seller_email = getattr(prop.seller, 'email', '')
+            if not seller_name:
+                seller_name = getattr(prop.seller, 'username', 'PropKart Agent')
+
+        # --- 2. Setup PDF ---
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="propkart_{property_id}_brochure.pdf"'
+        
+        c = canvas.Canvas(response, pagesize=A4)
+        c.setPageCompression(1)
+        c.setTitle(f"{prop.title} - PropKart Brochure")
+        
+        page_number = [1] # Use a mutable list to track page number across functions
+
+        # --- 3. Draw Content ---
+        
+        # Page 1 Header
+        y = _draw_page_header(c, "PropKart", page_number[0])
+        
+        # --- Hero Section ---
+        y = _draw_hero(c, MARGIN, y, CONTENT_WIDTH, prop, hero_image)
+
+        # --- Specs Section ---
+        # Check if we need to break page before drawing specs (Approx 180 points for specs)
+        if y < MARGIN + FOOTER_HEIGHT + 180:
+            _draw_page_footer(c)
             c.showPage()
-            c.setPageCompression(1)
-            y = height - 60
+            page_number[0] += 1
+            y = _draw_page_header(c, "PropKart", page_number[0])
+            y -= MARGIN
+            
+        y = _draw_section_title(c, MARGIN, y, "Key Specifications")
         
-        c.setFont('Helvetica-Bold', 14)
-        c.drawString(40, y, 'Gallery')
-        y -= 20
+        specs = [
+            ("🏠", "PROPERTY TYPE", str(prop.type).title()),
+            ("🛏️", "BEDROOMS", prop.bedrooms or '—'),
+            ("🚿", "BATHROOMS", prop.bathrooms or '—'),
+            ("🚪", "TOTAL ROOMS", prop.rooms or '—'),
+            ("📏", "DIMENSIONS", f"{prop.length or '—'} × {prop.width or '—'} ft"),
+            ("🪑", "FURNISHED", "Yes" if prop.furnished else "No"),
+            ("👁️", "VIEWS", prop.views or '—'),
+            ("📅", "LISTED ON", prop.created_at.strftime('%b %d, %Y') if getattr(prop, 'created_at', None) else '—'),
+        ]
+        y = _draw_specs(c, MARGIN, y, CONTENT_WIDTH, specs)
+
+        # --- Description Section ---
+        # Check if we need to break page before drawing description (Approx 150 points for desc)
+        if y < MARGIN + FOOTER_HEIGHT + 150:
+            _draw_page_footer(c)
+            c.showPage()
+            page_number[0] += 1
+            y = _draw_page_header(c, "PropKart", page_number[0])
+            y -= MARGIN
+            
+        y = _draw_section_title(c, MARGIN, y, "Property Overview")
+        desc = prop.description or 'No description provided.'
+        y = _draw_paragraph(c, MARGIN, y, desc, CONTENT_WIDTH)
+
+        # --- Seller Section ---
+        # Check if we need to break page before drawing seller card (Approx 100 points)
+        if y < MARGIN + FOOTER_HEIGHT + 100:
+            _draw_page_footer(c)
+            c.showPage()
+            page_number[0] += 1
+            y = _draw_page_header(c, "PropKart", page_number[0])
+            y -= MARGIN
+            
+        y = _draw_section_title(c, MARGIN, y, "Contact Information")
+        y = _draw_seller_card(c, MARGIN, y, CONTENT_WIDTH, seller_name, seller_email)
+
+        # --- Gallery Section ---
+        if image_objects:
+            # Check if we need to break page before drawing gallery title
+            if y < MARGIN + FOOTER_HEIGHT + 50:
+                _draw_page_footer(c)
+                c.showPage()
+                page_number[0] += 1
+                y = _draw_page_header(c, "PropKart", page_number[0])
+                y -= MARGIN
+                
+            y = _draw_section_title(c, MARGIN, y, "Exclusive Gallery")
+            # Gallery function handles its own internal page breaks
+            _draw_gallery(c, MARGIN, y, CONTENT_WIDTH, image_objects, page_number)
+
+        # --- 4. Finalize PDF ---
+        _draw_page_footer(c)
+        c.save()
         
-        y = _draw_gallery(c, images, width, height, y)
+        return response
     
-    # Footer
-    c.setFont('Helvetica', 8)
-    c.setFillColor(colors.grey)
-    c.drawRightString(width - 40, 30, 'PropKart Property Brochure')
-    
-    c.showPage()
-    c.save()
-    
-    return response
 @modal_login_required
 def property_message(request, property_id):
     if request.method != 'POST':

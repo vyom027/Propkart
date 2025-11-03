@@ -59,6 +59,7 @@ urlpatterns = [
     # Wishlist
     path('wishlist/toggle/', views.wishlist_toggle, name='wishlist_toggle'),
     path('wishlist/', views.wishlist_list, name='wishlist_list'),
+    path('wishlist/export/pdf/', views.export_wishlist_pdf, name='export_wishlist_pdf'),
     
     # Chat API endpoints
     path('api/chat/ask/', views.chat_ask, name='chat_ask'),
