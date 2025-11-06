@@ -335,22 +335,11 @@
                   </div>
                   <div class="d-flex align-items-center" style="gap:.5rem;">
                     
-                  <button class="btn btn-primary btn-sm" 
-                    data-bs-toggle="modal" data-bs-target="#propertyModal"
-                    data-id="{{ property.id }}"
-                    data-title="{{ property.title }}"
-                    data-images='{% for img in property.images.all %}{{ img.image.url }}{% if not forloop.last %},{% endif %}{% endfor %}'
-                    data-price="{{ property.price|indian_currency  }}"
-                    data-address="{{ property.location }}"
-                    data-city="{{ property.city }}"
-                    data-state="{{ property.state }}"
-                    data-country="{{ property.country }}"
-                    data-bedrooms="{{ property.bedrooms }}"
-                    data-bathrooms="{{ property.bathrooms }}"
-                    data-views="{{ property.views }}"
-                          data-description="{{ property.description }}">
-                    View Details
-                  </button>
+                    <a href="{% url 'property_detail' property.id %}" class="btn btn-primary btn-sm">
+                      View Details
+                  </a>
+                  
+
                   </div>
             </div>
           </div>
@@ -399,74 +388,6 @@
   </div>
 </div>
 
-
-<div class="modal fade" id="propertyModal" tabindex="-1" aria-labelledby="propertyModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header border-bottom-0">
-        <h5 class="modal-title" id="modal-title">Property Details</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body pt-0">
-        
-        <div id="propertyCarousel" class="carousel slide mb-3" data-bs-ride="carousel" data-bs-interval="5000">
-          <div class="carousel-inner rounded" id="modal-images">
-            </div>
-          <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
-            <span class="carousel-control-prev-icon"></span>
-            <span class="visually-hidden">Previous</span>
-          </button>
-          <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
-            <span class="carousel-control-next-icon"></span>
-            <span class="visually-hidden">Next</span>
-          </button>
-        </div>
-
-        <div id="modal-thumbnails" class="d-flex justify-content-start flex-wrap mb-4" style="gap: 1rem;">
-          </div>
-
-        <div class="modal-details-section p-4 rounded bg-light mb-4">
-          <h6 class="text-primary mb-3">Property Information</h6>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <p class="mb-1"><strong>Price:</strong> <span class="d-block" id="modal-price"></span></p>
-              <p class="mb-1"><strong>Views:</strong> <span class="d-block" id="modal-views"></span></p>
-              <p class="mb-1"><strong>Address:</strong> <span class="d-block" id="modal-address"></span></p>
-              <p class="mb-1">
-                <strong>Contact:</strong>
-                <span class="d-block " >
-                  <a href="#" id="modal-msg-btn" class="btn btn-sm btn-outline-success mt-2">Send a Message</a>
-                  <a href="" id="modal-property-btn" class="btn btn-sm btn-outline-primary mt-2 ms-2" target="_blank">
-                    <i class="bi bi-house-door me-1"></i>View Property Page
-                  </a>
-                </span>
-              </p>
-             
-            </div>
-            <div class="col-md-6">
-              <p class="mb-1"><strong>City:</strong> <span class="d-block" id="modal-city"></span></p>
-              <p class="mb-1"><strong>State:</strong> <span class="d-block" id="modal-state"></span></p>
-              <p class="mb-1"><strong>Country:</strong> <span class="d-block" id="modal-country"></span></p>
-              <p class="mb-1">
-                <strong>Specs:</strong>
-                <span class="d-flex align-items-center mt-1">
-                  <span class="icon-bed me-2"></span><span id="modal-bedrooms"></span> &nbsp;beds
-                  <span class="icon-bath me-2 ms-3"></span><span id="modal-bathrooms"></span> &nbsp;baths
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-description-section p-4 rounded border">
-          <h6 class="text-primary mb-3">Description</h6>
-          <p id="modal-description" class="text-black-50"></p>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
 
 
 <style>

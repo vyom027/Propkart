@@ -1,6 +1,7 @@
 
 {% extends 'app/base.html' %}
 {% load static %}
+{% load price_format %}
 {% block title %}Home{% endblock %}
 
 {% block extra_css %}
@@ -23,10 +24,31 @@
     <div class="row justify-content-center align-items-center">
       <div class="col-lg-9 text-center">
         <h1 class="heading" data-aos="fade-up">Easiest way to find your dream home</h1>
-        <form action="{% url 'property_list' %}" method="get" class="narrow-w form-search d-flex align-items-stretch mb-3" data-aos="fade-up" data-aos-delay="200">
-          <input type="text" name="q" class="form-control px-4" placeholder="Search by city, state or address" aria-label="Search properties" />
-          <button type="submit" class="btn btn-primary">Search</button>
-        </form>
+        <!-- Enhanced Search Bar -->
+        <div class="search-hero-container" data-aos="fade-up" data-aos-delay="200">
+          <div class="row justify-content-center">
+            <div class="col-lg-8">
+              <div class="search-bar-wrapper">
+                <form action="{% url 'property_list' %}" method="get" class="input-group input-group-lg">
+                  <span class="input-group-text bg-white border-0">
+                    <i class="bi bi-geo-alt text-primary"></i>
+                  </span>
+                  <input type="text" name="q" class="form-control border-0 shadow-sm" placeholder="Enter city, area, or landmark" id="heroSearch">
+                  <button type="submit" class="btn btn-primary px-4">
+                    <i class="bi bi-search me-2"></i>Search
+                  </button>
+                </form>
+                <div class="search-suggestions mt-3">
+                  <span class="text-white-50 me-3">Popular:</span>
+                  <a href="{% url 'property_list' %}?q=Mumbai" class="badge bg-transparent border border-white text-white me-2 mb-2">Mumbai</a>
+                  <a href="{% url 'property_list' %}?q=Delhi" class="badge bg-transparent border border-white text-white me-2 mb-2">Delhi</a>
+                  <a href="{% url 'property_list' %}?q=Bangalore" class="badge bg-transparent border border-white text-white me-2 mb-2">Bangalore</a>
+                  <a href="{% url 'property_list' %}?q=Pune" class="badge bg-transparent border border-white text-white me-2 mb-2">Pune</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -36,7 +58,7 @@
   <div class="container">
     <div class="row mb-5 align-items-center">
       <div class="col-lg-6">
-        <h2 class="font-weight-bold text-primary heading">Popular Properties</h2>
+        <h2 class="font-weight-bold text-primary heading">Latest Properties</h2>
       </div>
       <div class="col-lg-6 text-lg-end">
         <p><a href="{% url 'property_list' %}" class="btn btn-primary text-white py-3 px-4">View all properties</a></p>

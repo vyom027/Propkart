@@ -7,10 +7,9 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: white;
-    border: 1px solid #ddd;
+    background: transparent;
+    border: none;
     border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     z-index: 1000;
     max-height: 200px;
     overflow-y: auto;
@@ -70,4 +69,21 @@
 .search-feature:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+
+.search-suggestions .badge {
+  background: rgba(159, 159, 159, 0.45) !important;
+  border: none !important;
+  color: #ffffff !important;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  padding: 8px 15px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.search-suggestions .badge:hover {
+  opacity: 1;
+  text-decoration: underline;
 }
