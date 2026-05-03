@@ -1,0 +1,162 @@
+<!-- Footer Section -->
+<footer class="footer-section">
+  <div class="footer-top">
+    <div class="container">
+      <div class="row gy-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="footer-widget">
+            <h4>PropKart</h4>
+            <p>Your trusted partner in finding the perfect property. We connect buyers and sellers to make property transactions seamless and transparent.</p>
+            <div class="social-links mt-3">
+              <a href="#"><i class="bi bi-facebook"></i></a>
+              <a href="#"><i class="bi bi-twitter"></i></a>
+              <a href="#"><i class="bi bi-instagram"></i></a>
+              <a href="#"><i class="bi bi-linkedin"></i></a>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="footer-widget">
+            <h4>Quick Links</h4>
+            <ul class="footer-links">
+              <li><a href="{% url 'index' %}">Home</a></li>
+              <li><a href="{% url 'property_list' %}">Properties</a></li>
+              <li><a href="{% url 'aboutUs' %}">About Us</a></li>
+              <li><a href="{% url 'contactUs' %}">Contact Us</a></li>
+              {% if not user.is_seller %}
+              <li><a href="{% url 'become_seller' %}">Become a Seller</a></li>
+              {% endif %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="footer-widget">
+            <h4>Property Types</h4>
+            <ul class="footer-links">
+              <li><a href="{% url 'property_list' %}?type=Apartment">Apartments</a></li>
+              <li><a href="{% url 'property_list' %}?type=House">Houses</a></li>
+              <li><a href="{% url 'property_list' %}?type=Villa">Villas</a></li>
+              <li><a href="{% url 'property_list' %}?type=Commercial">Commercial</a></li>
+              <li><a href="{% url 'property_list' %}?type=Land">Land</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="footer-widget">
+            <h4>Contact Us</h4>
+            <div class="contact-info">
+              <p><i class="bi bi-geo-alt"></i> 123 Property Street, Real Estate City</p>
+              <p><i class="bi bi-telephone"></i> +1 234 567 8900</p>
+              <p><i class="bi bi-envelope"></i> info@propkart.com</p>
+              <p><i class="bi bi-clock"></i> Mon-Fri: 9AM to 5PM</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6">
+          <p class="mb-md-0">© {% now "Y" %} PropKart. All rights reserved.</p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <p class="mb-0">Terms of Service | Privacy Policy</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  /* Footer Styles */
+  .footer-section {
+    margin-top: 4rem;
+  }
+  
+  .footer-top {
+    padding: 70px 0 50px;
+    background: linear-gradient(135deg, #2c7744 0%, #1e5631 100%);
+    color: #fff;
+  }
+  
+  .footer-widget h4 {
+    color: #fff;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    position: relative;
+    padding-bottom: 10px;
+  }
+  
+  .footer-widget h4:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 50px;
+    background-color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .footer-links {
+    padding: 0;
+    list-style: none;
+    margin: 0;
+  }
+  
+  .footer-links li {
+    padding: 5px 0;
+  }
+  
+  .footer-links a {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  
+  .footer-links a:hover {
+    color: #fff;
+    padding-left: 5px;
+  }
+  
+  .social-links a {
+    display: inline-block;
+    height: 36px;
+    width: 36px;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin-right: 10px;
+    text-align: center;
+    line-height: 36px;
+    border-radius: 50%;
+    color: #fff;
+    transition: all 0.3s ease;
+  }
+  
+  .social-links a:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-3px);
+  }
+  
+  .contact-info p {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .contact-info i {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  
+  .footer-bottom {
+    padding: 20px 0;
+    background-color: #184427;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+  }
+</style>

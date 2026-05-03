@@ -1,0 +1,195 @@
+{% extends "app/base.html" %}
+{% load static %}
+{% block title %} Profile {% endblock %}
+{% block content %}
+<style>
+  .profile-wrapper {
+    padding: 3rem 0;
+    font-family: 'Work Sans', sans-serif;
+  }
+
+  .profile-card {
+    max-width: 1100px;
+    margin: auto;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+  }
+
+  .sidebar {
+    background: linear-gradient(180deg, #f8f9fa, #eef2f5);
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .profile-pic {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #fff;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .nav-tabs .nav-link.active {
+    background-color: var(--bs-primary);
+    color: #fff !important;
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+
+  .btn-primary-profile {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 10px 22px;
+    transition: all 0.3s ease;
+  }
+  .btn-primary-profile:hover {
+    background-color: #005555 !important;
+    border-color: #005555 !important;
+    transform: translateY(-2px);
+    color: white;
+    box-shadow: 0px 4px 10px rgba(0, 32, 74, 0.3);
+  }
+
+  .btn-outline-secondary, .btn-danger {
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-weight: 600;
+  }
+</style>
+
+<div class="profile-wrapper" style="margin-top:75px">
+  <div class="card profile-card">
+    <div class="row g-0">
+      
+      <div class="col-md-4 sidebar">
+        {% if user.profile_picture %}
+          <img id="preview-img" src="{{ user.profile_picture.url }}" class="profile-pic mb-3">
+        {% else %}
+          <img id="preview-img" src="{% static 'images/default-avatar.png' %}" class="profile-pic mb-3">
+        {% endif %}
+        <h3 class="fw-bold">{{ user.first_name }} {{ user.last_name }}</h3>
+        <p class="muted text">Role: 
+            {% if user.is_seller %}
+              Seller
+            {% else %}
+              Buyer
+            {% endif %}
+          </p>
+
+      </div>
+
+      <!-- Main Content -->
+      <div class="col-md-8 p-4">
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-3" id="profileTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="view-tab" data-bs-toggle="tab" data-bs-target="#view" type="button">Profile Info</button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit" type="button">Edit Profile</button>
+          </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+          
+          <!-- View Tab -->
+          <div class="tab-pane fade show active" id="view" role="tabpanel">
+            <div class="row g-3">
+              <div class="col-md-6"><strong>Email:</strong> {{ user.email }}</div>
+              <div class="col-md-6"><strong>Mobile:</strong> {{ user.mobile }}</div>
+              <div class="col-md-6"><strong>City:</strong> {{ user.city }}</div>
+              <div class="col-md-6"><strong>State:</strong> {{ user.state }}</div>
+              <div class="col-md-6"><strong>Country:</strong> {{ user.country }}</div>
+              <div class="col-12"><strong>Address:</strong> {{ user.address }}</div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="edit" role="tabpanel">
+            <form id="profile-form" method="POST" enctype="multipart/form-data" action="{% url 'edit_profile' %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Profile Picture</label>
+                <input type="file" name="profile_picture" id="id_profile_picture" class="form-control"
+                       accept="image/*" onchange="previewImage(event)">
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">First Name</label>
+                  <input type="text" name="first_name" value="{{ user.first_name }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Last Name</label>
+                  <input type="text" name="last_name" value="{{ user.last_name }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email</label>
+                  <input type="email" name="email" value="{{ user.email }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Mobile</label>
+                  <input type="text" name="mobile" value="{{ user.mobile }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">City</label>
+                  <input type="text" name="city" value="{{ user.city }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">State</label>
+                  <input type="text" name="state" value="{{ user.state }}" class="form-control">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Country</label>
+                  <input type="text" name="country" value="{{ user.country }}" class="form-control">
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Address</label>
+                  <textarea name="address" class="form-control" rows="2">{{ user.address }}</textarea>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-end mt-4">
+                <a href="{% url 'profile' %}" class="btn btn-outline-secondary me-2">Cancel</a>
+                <button type="reset" class="btn btn-danger me-2" id="reset-btn">Reset</button>
+                <button type="submit" class="btn btn-primary-profile">Save Changes</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const previewImg = document.getElementById("preview-img");
+  const profileForm = document.getElementById("profile-form");
+  const resetBtn = document.getElementById("reset-btn");
+  const originalPic = "{{ user.profile_picture.url|default:'' }}";
+  const defaultPic = "{% static 'images/default-avatar.png' %}";
+
+  function previewImage(event) {
+    const reader = new FileReader();
+    reader.onload = function(){
+      previewImg.src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+  }
+  
+  resetBtn.addEventListener("click", function () {
+    setTimeout(() => {
+      previewImg.src = originalPic ? originalPic : defaultPic;
+    }, 50);
+  });
+
+  document.getElementById("view-tab").addEventListener("click", function () {
+    profileForm.reset();
+    previewImg.src = originalPic ? originalPic : defaultPic;
+  });
+</script>
+{% endblock %}

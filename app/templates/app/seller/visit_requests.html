@@ -1,0 +1,445 @@
+{% extends 'app/seller/seller-base.html' %}
+{% load static %}
+
+{% block title %}Visit Requests{% endblock %}
+
+{% block content %}
+<div class="container" style="margin-top: 120px;">
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold">Visit Requests</h2>
+      <span class="text-muted">Manage property visit requests from buyers</span>
+    </div>
+    <div class="text-end">
+      <a href="{% url 'seller_dashboard' %}" class="btn btn-outline-primary">
+        <i class="bi bi-house-door me-2"></i>Back to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Visit Request Statistics -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-primary mb-0">{{ total_requests }}</h3>
+          <small class="text-muted">Total Requests</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-warning mb-0">{{ pending_requests }}</h3>
+          <small class="text-muted">Pending</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center">
+          <h3 class="text-success mb-0">{{ approved_requests }}</h3>
+          <small class="text-muted">Approved</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- If no visit requests -->
+  {% if visit_requests.count == 0 %}
+    <div class="alert alert-info text-center shadow-sm">
+      <i class="bi bi-calendar-x fs-1 text-muted d-block mb-3"></i>
+      <h5>No visit requests yet</h5>
+      <p class="mb-0">When buyers are interested in visiting your properties, their requests will appear here.</p>
+    </div>
+  {% else %}
+
+    <!-- Visit Requests Table -->
+    <div class="table-responsive shadow-sm rounded">
+      <table class="table align-middle table-hover">
+        <thead class="table-dark">
+          <tr>
+            <th scope="col">Visitor</th>
+            <th scope="col">Property</th>
+            <th scope="col">Preferred Date/Time</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for visit_request in visit_requests %}
+          <tr class="{% if visit_request.status == 'pending' %}table-warning{% endif %}">
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                  <i class="bi bi-person-fill text-white"></i>
+                </div>
+                <div>
+                  <strong>{{ visit_request.visitor_name }}</strong>
+                  {% if visit_request.status == 'pending' %}
+                    <span class="badge bg-warning ms-2">New</span>
+                  {% elif visit_request.status == 'approved' %}
+                    <span class="badge bg-success ms-2">Approved</span>
+                  {% elif visit_request.status == 'rejected' %}
+                    <span class="badge bg-danger ms-2">Rejected</span>
+                  {% endif %}
+                  <br>
+                  <small class="text-muted">{{ visit_request.visitor_email }}</small><br>
+                  <small class="text-muted">{{ visit_request.visitor_phone }}</small>
+                  {% if visit_request.visitor_count > 1 %}
+                    <br><small class="text-info">{{ visit_request.visitor_count }} visitors</small>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="fw-semibold">{{ visit_request.property.title }}</span><br>
+              <small class="text-muted">{{ visit_request.property.location }}</small>
+            </td>
+            <td>
+              <div class="visit-datetime">
+                <span class="fw-medium">{{ visit_request.preferred_date|date:"M d, Y" }}</span><br>
+                <small class="text-muted">{{ visit_request.preferred_time|time:"g:i A" }}</small>
+                {% if visit_request.alternative_date %}
+                  <hr class="my-1">
+                  <small class="text-info">
+                    Alt: {{ visit_request.alternative_date|date:"M d, Y" }}
+                    {% if visit_request.alternative_time %}
+                      {{ visit_request.alternative_time|time:"g:i A" }}
+                    {% endif %}
+                  </small>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              <span class="badge bg-{% if visit_request.status == 'pending' %}warning{% elif visit_request.status == 'approved' %}success{% elif visit_request.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                {{ visit_request.status|title }}
+              </span>
+              {% if visit_request.confirmed_date %}
+                <br><small class="text-success">
+                  Confirmed: {{ visit_request.confirmed_date|date:"M d, Y" }}
+                  {% if visit_request.confirmed_time %}{{ visit_request.confirmed_time|time:"g:i A" }}{% endif %}
+                </small>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <div class="btn-group-vertical" role="group">
+                {% if visit_request.status == 'pending' %}
+                  <button class="btn btn-sm btn-success mb-1" 
+                          onclick="updateVisitRequest({{ visit_request.id }}, 'approved', '{{ visit_request.preferred_date|date:"Y-m-d" }}', '{{ visit_request.preferred_time|time:"H:i" }}')" 
+                          title="Approve Visit">
+                    <i class="bi bi-check-circle me-1"></i>Approve
+                  </button>
+                  <button class="btn btn-sm btn-danger mb-1" 
+                          onclick="updateVisitRequest({{ visit_request.id }}, 'rejected')" 
+                          title="Reject Visit">
+                    <i class="bi bi-x-circle me-1"></i>Reject
+                  </button>
+                {% elif visit_request.status == 'approved' %}
+                  <button class="btn btn-sm btn-outline-success mb-1" 
+                          onclick="updateVisitRequest({{ visit_request.id }}, 'completed')" 
+                          title="Mark as Completed">
+                    <i class="bi bi-check2-all me-1"></i>Complete
+                  </button>
+                {% endif %}
+                <button class="btn btn-sm btn-outline-info" 
+                        onclick="viewVisitDetails({{ visit_request.id }}, '{{ visit_request.visitor_name|escapejs }}', '{{ visit_request.visitor_email }}', '{{ visit_request.visitor_phone }}', '{{ visit_request.property.title|escapejs }}', '{{ visit_request.preferred_date|date:"M d, Y" }}', '{{ visit_request.preferred_time|time:"g:i A" }}', '{{ visit_request.alternative_date|date:"M d, Y"|default:"" }}', '{{ visit_request.alternative_time|time:"g:i A"|default:"" }}', '{{ visit_request.message|escapejs }}', {{ visit_request.visitor_count }}, '{{ visit_request.status }}', '{% if visit_request.confirmed_date %}{{ visit_request.confirmed_date|date:"M d, Y" }}{% endif %}', '{% if visit_request.confirmed_time %}{{ visit_request.confirmed_time|time:"g:i A" }}{% endif %}', '{{ visit_request.seller_response|escapejs }}')" 
+                        title="View Details">
+                  <i class="bi bi-eye me-1"></i>Details
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-5">
+              <i class="bi bi-calendar-x fs-1 text-muted d-block mb-3"></i>
+              <h5 class="text-muted">No visit requests found</h5>
+              <p class="text-muted mb-0">Visit requests from interested buyers will appear here.</p>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% endif %}
+</div>
+
+<!-- Visit Request Details Modal -->
+<div class="modal fade" id="visitDetailsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Visit Request Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="visitDetailsContent">
+        <!-- Content will be loaded dynamically -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Update Visit Request</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="updateStatusForm" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <input type="hidden" id="visitRequestId" name="visit_request_id">
+          <input type="hidden" id="statusInput" name="status">
+          
+          <div class="mb-3">
+            <label class="form-label">Response Message</label>
+            <textarea class="form-control" name="seller_response" rows="3" 
+                      placeholder="Optional message to the visitor..."></textarea>
+          </div>
+          
+          <div id="confirmDateFields" style="display: none;">
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Confirmed Date</label>
+                <input type="date" class="form-control" name="confirmed_date" id="confirmedDateInput">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Confirmed Time</label>
+                <input type="time" class="form-control" name="confirmed_time" id="confirmedTimeInput">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="confirmUpdateBtn">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function updateVisitRequest(requestId, status, preferredDate = '', preferredTime = '') {
+  document.getElementById('visitRequestId').value = requestId;
+  document.getElementById('statusInput').value = status;
+  
+  const form = document.getElementById('updateStatusForm');
+  form.action = `/seller/visit-request/${requestId}/update/`;
+  
+  const confirmFields = document.getElementById('confirmDateFields');
+  const confirmBtn = document.getElementById('confirmUpdateBtn');
+  const dateInput = document.getElementById('confirmedDateInput');
+  const timeInput = document.getElementById('confirmedTimeInput');
+  
+  if (status === 'approved') {
+    confirmFields.style.display = 'block';
+    confirmBtn.textContent = 'Approve Visit';
+    confirmBtn.className = 'btn btn-success';
+    
+    // Set default values to preferred date/time
+    if (preferredDate) {
+      dateInput.value = preferredDate;
+    }
+    if (preferredTime) {
+      timeInput.value = preferredTime;
+    }
+  } else if (status === 'rejected') {
+    confirmFields.style.display = 'none';
+    confirmBtn.textContent = 'Reject Visit';
+    confirmBtn.className = 'btn btn-danger';
+  } else if (status === 'completed') {
+    confirmFields.style.display = 'none';
+    confirmBtn.textContent = 'Mark Complete';
+    confirmBtn.className = 'btn btn-primary';
+  }
+  
+  const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
+  modal.show();
+}
+
+function viewVisitDetails(requestId, visitorName, visitorEmail, visitorPhone, propertyTitle, preferredDate, preferredTime, altDate, altTime, message, visitorCount, status, confirmedDate, confirmedTime, sellerResponse) {
+  const modal = new bootstrap.Modal(document.getElementById('visitDetailsModal'));
+  
+  // Generate action buttons based on status
+  let actionButtons = '';
+  if (status === 'pending') {
+    actionButtons = `
+      <button class="btn btn-success" onclick="updateVisitRequest(${requestId}, 'approved', '${preferredDate.split(' ')[2]}-${getMonthNumber(preferredDate.split(' ')[0])}-${preferredDate.split(' ')[1].replace(',', '').padStart(2, '0')}', '${convertTo24Hour(preferredTime)}')">
+        <i class="bi bi-check-circle me-1"></i>Approve
+      </button>
+      <button class="btn btn-danger" onclick="updateVisitRequest(${requestId}, 'rejected')">
+        <i class="bi bi-x-circle me-1"></i>Reject
+      </button>
+    `;
+  } else if (status === 'approved') {
+    actionButtons = `
+      <button class="btn btn-primary" onclick="updateVisitRequest(${requestId}, 'completed')">
+        <i class="bi bi-check2-all me-1"></i>Mark as Completed
+      </button>
+      <button class="btn btn-outline-secondary" onclick="updateVisitRequest(${requestId}, 'rejected')">
+        <i class="bi bi-x-circle me-1"></i>Cancel Visit
+      </button>
+    `;
+  } else if (status === 'rejected') {
+    actionButtons = `
+      <button class="btn btn-success" onclick="updateVisitRequest(${requestId}, 'approved', '${preferredDate.split(' ')[2]}-${getMonthNumber(preferredDate.split(' ')[0])}-${preferredDate.split(' ')[1].replace(',', '').padStart(2, '0')}', '${convertTo24Hour(preferredTime)}')">
+        <i class="bi bi-check-circle me-1"></i>Reconsider & Approve
+      </button>
+    `;
+  } else if (status === 'completed') {
+    actionButtons = `
+      <div class="alert alert-success mb-0">
+        <i class="bi bi-check-circle-fill me-2"></i>This visit has been completed.
+      </div>
+    `;
+  } else if (status === 'cancelled') {
+    actionButtons = `
+      <div class="alert alert-secondary mb-0">
+        <i class="bi bi-x-circle-fill me-2"></i>This visit was cancelled.
+      </div>
+    `;
+  }
+
+  const content = `
+    <div class="row">
+      <div class="col-md-6">
+        <h6 class="text-primary mb-3"><i class="bi bi-person-circle me-2"></i>Visitor Information</h6>
+        <table class="table table-borderless table-sm">
+          <tr>
+            <td><strong>Name:</strong></td>
+            <td>${visitorName}</td>
+          </tr>
+          <tr>
+            <td><strong>Email:</strong></td>
+            <td><a href="mailto:${visitorEmail}">${visitorEmail}</a></td>
+          </tr>
+          <tr>
+            <td><strong>Phone:</strong></td>
+            <td><a href="tel:${visitorPhone}">${visitorPhone}</a></td>
+          </tr>
+          <tr>
+            <td><strong>Visitors:</strong></td>
+            <td>${visitorCount} person${visitorCount > 1 ? 's' : ''}</td>
+          </tr>
+          <tr>
+            <td><strong>Status:</strong></td>
+            <td><span class="badge bg-${getStatusColor(status)}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></td>
+          </tr>
+        </table>
+      </div>
+      
+      <div class="col-md-6">
+        <h6 class="text-success mb-3"><i class="bi bi-house-door me-2"></i>Visit Details</h6>
+        <table class="table table-borderless table-sm">
+          <tr>
+            <td><strong>Property:</strong></td>
+            <td>${propertyTitle}</td>
+          </tr>
+          <tr>
+            <td><strong>Requested Date:</strong></td>
+            <td>${preferredDate}</td>
+          </tr>
+          <tr>
+            <td><strong>Requested Time:</strong></td>
+            <td>${preferredTime}</td>
+          </tr>
+          ${altDate ? `
+          <tr>
+            <td><strong>Alternative:</strong></td>
+            <td>${altDate} ${altTime ? altTime : ''}</td>
+          </tr>
+          ` : ''}
+          ${confirmedDate ? `
+          <tr>
+            <td><strong>Confirmed Date:</strong></td>
+            <td class="text-success fw-bold">${confirmedDate}</td>
+          </tr>
+          ` : ''}
+          ${confirmedTime ? `
+          <tr>
+            <td><strong>Confirmed Time:</strong></td>
+            <td class="text-success fw-bold">${confirmedTime}</td>
+          </tr>
+          ` : ''}
+        </table>
+      </div>
+    </div>
+    
+    ${message ? `
+    <div class="row mt-3">
+      <div class="col-12">
+        <h6 class="text-info mb-2"><i class="bi bi-chat-text me-2"></i>Buyer's Message</h6>
+        <div class="alert alert-light">
+          ${message}
+        </div>
+      </div>
+    </div>
+    ` : ''}
+    
+    ${sellerResponse ? `
+    <div class="row mt-3">
+      <div class="col-12">
+        <h6 class="text-warning mb-2"><i class="bi bi-reply me-2"></i>Your Response</h6>
+        <div class="alert alert-warning">
+          ${sellerResponse}
+        </div>
+      </div>
+    </div>
+    ` : ''}
+    
+    <div class="row mt-3">
+      <div class="col-12">
+        <div class="d-flex justify-content-end gap-2">
+          ${actionButtons}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById('visitDetailsContent').innerHTML = content;
+  modal.show();
+}
+
+// Helper function to get status color
+function getStatusColor(status) {
+  switch(status) {
+    case 'pending': return 'warning';
+    case 'approved': return 'success';
+    case 'rejected': return 'danger';
+    case 'completed': return 'primary';
+    case 'cancelled': return 'secondary';
+    default: return 'secondary';
+  }
+}
+
+// Helper functions for date/time conversion
+function getMonthNumber(monthName) {
+  const months = {
+    'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+    'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+    'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+  };
+  return months[monthName] || '01';
+}
+
+function convertTo24Hour(time12h) {
+  if (!time12h) return '';
+  const [time, modifier] = time12h.split(' ');
+  let [hours, minutes] = time.split(':');
+  if (hours === '12') {
+    hours = '00';
+  }
+  if (modifier === 'PM') {
+    hours = parseInt(hours, 10) + 12;
+  }
+  return `${hours.toString().padStart(2, '0')}:${minutes}`;
+}
+</script>
+{% endblock %}
