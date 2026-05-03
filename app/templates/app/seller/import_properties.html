@@ -1,0 +1,90 @@
+{% extends 'app/seller/seller-base.html' %}
+
+{% block title %}Import Properties{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Import Properties</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Import Properties from CSV + ZIP</h5>
+                    <p class="card-text">
+                        Upload a CSV file containing property data and a ZIP file containing the property images.
+                    </p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">CSV File Requirements</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><strong>ALL columns required:</strong> external_id, title, description, price, location, city, state, country, type, length, width, rooms, bedrooms, bathrooms, furnished, images</li>
+                                        <li><strong>Images column:</strong> Comma-separated filenames (e.g., "image1.jpg,image2.jpg")</li>
+                                        <li><strong>Property types:</strong> apartment, house, land, villa, commercial</li>
+                                        <li><strong>Numeric fields:</strong> price, length, width, rooms, bedrooms, bathrooms must be valid numbers</li>
+                                        <li><strong>Furnished field:</strong> true/false (case insensitive)</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">ZIP File Requirements</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><strong>Max size:</strong> 50MB</li>
+                                        <li><strong>Image formats:</strong> JPG, JPEG, PNG, WEBP</li>
+                                        <li><strong>Max per image:</strong> 10MB</li>
+                                        <li><strong>Max per property:</strong> 10 images</li>
+                                        <li><strong>Structure:</strong> All images in ZIP root</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadCsvModal">
+                            <i class="fas fa-upload me-2"></i>Upload CSV + ZIP Files
+                        </button>
+                        
+                        <a href="{% url 'my_properties' %}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Properties
+                        </a>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h6>Sample Files</h6>
+                        <p class="text-muted">
+                            Download sample files to understand the format:
+                        </p>
+                        <a href="/media/sample_data/property_import_sample_new.csv" class="btn btn-outline-primary btn-sm me-2" download>
+                            <i class="fas fa-download me-1"></i>Sample CSV
+                        </a>
+                        <a href="/media/sample_data/sample_images.zip" class="btn btn-outline-primary btn-sm me-2" download>
+                            <i class="fas fa-download me-1"></i>Sample ZIP
+                        </a>
+                        <a href="/media/sample_data/README.md" class="btn btn-outline-info btn-sm" download>
+                            <i class="fas fa-book me-1"></i>Documentation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

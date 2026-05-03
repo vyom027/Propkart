@@ -11,7 +11,10 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
 # os
 import os
 from dotenv import load_dotenv
@@ -28,11 +31,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+<<<<<<< HEAD
 SECRET_KEY = "django-insecure-vf_5#b(zncj8q=&*a)coqh8+sw9o3zm3jzqxayfu@&1u@o7li@"
+=======
+SECRET_KEY = 'django-insecure-vf_5#b(zncj8q=&*a)coqh8+sw9o3zm3jzqxayfu@&1u@o7li@'
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+<<<<<<< HEAD
 ALLOWED_HOSTS = ["*"]
 
 AUTH_USER_MODEL = "app.User"
@@ -54,10 +62,34 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 TEMP_MEDIA_ROOT = os.path.join(MEDIA_ROOT, "temp_uploads")
+=======
+ALLOWED_HOSTS = ['*']
+
+AUTH_USER_MODEL = "app.User" 
+# Application definition
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'app'
+]
+
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = BASE_DIR / "media"
+
+TEMP_MEDIA_ROOT = os.path.join(MEDIA_ROOT, 'temp_uploads')
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
 if not os.path.exists(TEMP_MEDIA_ROOT):
     os.makedirs(TEMP_MEDIA_ROOT)
 
 MIDDLEWARE = [
+<<<<<<< HEAD
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -79,21 +111,54 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+=======
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'Propkart.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
             ],
         },
     },
 ]
 
+<<<<<<< HEAD
 WSGI_APPLICATION = "Propkart.wsgi.application"
+=======
+WSGI_APPLICATION = 'Propkart.wsgi.application'
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
+<<<<<<< HEAD
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+=======
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
     }
 }
 
@@ -103,6 +168,7 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+<<<<<<< HEAD
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
@@ -113,6 +179,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+=======
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
     },
 ]
 
@@ -120,9 +198,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
+<<<<<<< HEAD
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "Asia/Kolkata"
+=======
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'Asia/Kolkata'
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
 
 USE_I18N = True
 
@@ -132,11 +216,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+<<<<<<< HEAD
 STATIC_URL = "static/"
+=======
+STATIC_URL = 'static/'
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
+<<<<<<< HEAD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
@@ -154,3 +243,22 @@ DEFAULT_FROM_EMAIL = "PropKart <lofi.24.27.4@gmail.com>"
 # Gemini settings (optional)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBnDxq2VBQcdjYUSVIEugkBIx-JhmzsaJ8")
 GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash")
+=======
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'lofi.24.27.4@gmail.com' 
+EMAIL_HOST_PASSWORD = 'lulefotsuovuublj'
+DEFAULT_FROM_EMAIL = 'PropKart <lofi.24.27.4@gmail.com>' 
+
+# Gemini settings (optional)
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyBnDxq2VBQcdjYUSVIEugkBIx-JhmzsaJ8')
+GEMINI_MODEL_NAME = os.getenv('GEMINI_MODEL_NAME', 'gemini-2.0-flash')
+>>>>>>> 1e192def6984b0d96da28f6c84e4da4cdec04807
